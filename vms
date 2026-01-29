@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+export LIBVIRT_DEFAULT_URI=qemu:///system
+
 VMS_ROOT="$(cd "$(dirname "$0")" && pwd)"
 source "$VMS_ROOT/lib/config.sh"
 source "$VMS_ROOT/lib/common.sh"
