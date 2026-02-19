@@ -61,15 +61,18 @@ vms                     # Main entry point (bash)
 │   ├── viewer.sh
 │   ├── list.sh
 │   └── destroy.sh
-├── profiles/
-│   ├── minimal.sh
-│   ├── gui.sh
-│   ├── browser.sh
-│   ├── telegram.sh
-│   └── dev.sh
 ├── lib/
 │   ├── common.sh
-│   └── config.sh
+│   ├── config.sh
+│   └── console-install.sh
+├── guest/                  # scripts that run inside VM
+│   ├── install.sh
+│   └── profiles/
+│       ├── minimal.sh
+│       ├── gui.sh
+│       ├── browser.sh
+│       ├── telegram.sh
+│       └── dev.sh
 └── templates/
     └── domain.xml
 ```

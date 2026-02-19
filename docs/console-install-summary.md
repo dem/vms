@@ -26,7 +26,7 @@ virt-install \
 - Sets `TERM=dumb` to disable colored prompts for reliable parsing
 - Uses unique completion marker: `INSTALL_FINISHED_MARKER_12345`
 
-### 3. Installation Script (`install/arch-install.sh`)
+### 3. Installation Script (`guest/install.sh`)
 - Partitions disk (GPT with EFI partition)
 - Installs base system via pacstrap
 - Configures locale, timezone, hostname
@@ -54,7 +54,7 @@ virt-install \
 # Wait ~30s for boot, then run automated install
 root_hash=$(openssl passwd -6 'password')
 user_hash=$(openssl passwd -6 'password')
-./lib/console-install.sh myvm install/arch-install.sh myhostname myuser "$root_hash" "$user_hash"
+./lib/console-install.sh myvm guest/install.sh myhostname myuser "$root_hash" "$user_hash"
 
 # After install, need to reconfigure VM for UEFI boot from disk
 # (TODO: automate this in vms tool)
@@ -68,5 +68,5 @@ user_hash=$(openssl passwd -6 'password')
 
 ## Files Modified
 - `lib/console-install.sh` - expect-based console automation
-- `install/arch-install.sh` - installation script
+- `guest/install.sh` - installation script
 - `commands/create.sh` - VM creation with direct kernel boot
