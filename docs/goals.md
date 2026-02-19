@@ -81,7 +81,7 @@ Each activity runs in its own VM. Easy to create, easy to destroy, easy to rebui
 | Type       | Storage          | Persistence | Use Case                      |
 |------------|------------------|-------------|-------------------------------|
 | Template   | qcow2 base       | Read-only   | Base images (minimal, gui)    |
-| AppVM      | qcow2 + backing  | Persistent  | Daily work VMs                |
+| AppVM      | qcow2            | Persistent  | Daily work VMs                |
 | Disposable | qcow2 + backing  | Ephemeral   | Throwaway, resets on shutdown |
 
 ## Guest Structure
