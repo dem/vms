@@ -34,7 +34,6 @@ cd vms
 | `vms viewer <name>`             | Open SPICE viewer (GUI with app)              |
 | `vms list`                      | List all VMs with status                      |
 | `vms destroy <name>`            | Remove VM and its storage                     |
-| `vms ssh <name>`                | SSH into VM                                   |
 
 ## Profiles
 
@@ -99,7 +98,6 @@ case "$cmd" in
     viewer)    source "$VMS_ROOT/commands/viewer.sh" "$@" ;;
     list)      source "$VMS_ROOT/commands/list.sh" "$@" ;;
     destroy)   source "$VMS_ROOT/commands/destroy.sh" "$@" ;;
-    ssh)       source "$VMS_ROOT/commands/ssh.sh" "$@" ;;
     help|*)    usage ;;
 esac
 ```
