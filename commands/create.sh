@@ -13,19 +13,84 @@ done
 
 [[ -z "$name" ]] && die "usage: vms create <name> [--profile <profile>]"
 
-info "Creating VM '$name' with profile '$profile'"
-info "  disk: $VMS_IMAGES/$name.qcow2"
-info "  memory: ${VMS_DEFAULT_MEMORY}MB"
-info "  cpus: $VMS_DEFAULT_CPUS"
-info "  iso: $VMS_ARCH_ISO"
+disk="$VMS_IMAGES/$name.qcow2"
+pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
 
+# Check if VM already exists
+if virsh dominfo "$name" &>/dev/null; then
+    die "VM '$name' already exists"
+fi
+
+# Check if disk already exists
+if [[ -f "$disk" ]]; then
+    die "Disk '$disk' already exists"
+fi
+
+# Check ISO exists
+if [[ ! -f "$VMS_ARCH_ISO" ]]; then
+    die "Arch ISO not found at $VMS_ARCH_ISO"
+fi
+
+# Paths for direct kernel boot (extracted from ISO)
+kernel_dir="$VMS_ISO/arch-boot"
+kernel="$kernel_dir/vmlinuz-linux"
+initrd="$kernel_dir/initramfs-linux.img"
+
+# Extract kernel/initrd from ISO if not present
+if [[ ! -f "$kernel" ]] || [[ ! -f "$initrd" ]]; then
+    info "Extracting kernel and initrd from ISO..."
+    sudo mkdir -p "$kernel_dir"
+    tmp_mount=$(mktemp -d)
+    sudo mount -o loop,ro "$VMS_ARCH_ISO" "$tmp_mount"
+    sudo cp "$tmp_mount/arch/boot/x86_64/vmlinuz-linux" "$kernel"
+    sudo cp "$tmp_mount/arch/boot/x86_64/initramfs-linux.img" "$initrd"
+    sudo umount "$tmp_mount"
+    rmdir "$tmp_mount"
+fi
+
+# Get ISO UUID for archiso boot
+iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
+[[ -z "$iso_uuid" ]] && die "Could not determine ISO UUID"
+
+info "Creating VM '$name'"
+info "  profile: $profile"
+info "  disk: $disk"
+
+# Create VM-specific package cache directory
+info "Creating package cache directory..."
+sudo mkdir -p "$pkg_dir"
+
+# Create disk image
+info "Creating disk image..."
+qemu-img create -f qcow2 "$disk" "$VMS_DEFAULT_DISK"
+
+# Create VM with virt-install
+info "Creating VM..."
+virt-install \
+    --name "$name" \
+    --osinfo archlinux \
+    --memory "$VMS_DEFAULT_MEMORY" \
+    --memorybacking source.type=memfd,access.mode=shared \
+    --vcpus "$VMS_DEFAULT_CPUS" \
+    --disk "path=$disk,format=qcow2,bus=virtio" \
+    --cdrom "$VMS_ARCH_ISO" \
+    --boot "kernel=$kernel,initrd=$initrd,kernel_args=archisobasedir=arch archisosearchuuid=$iso_uuid console=tty0 console=ttyS0,115200n8" \
+    --network network=default,model=virtio \
+    --filesystem "type=mount,source.dir=$VMS_PKG_CACHE,target.dir=pkg-host,driver.type=virtiofs,readonly=yes" \
+    --filesystem "type=mount,source.dir=$pkg_dir,target.dir=pkg,driver.type=virtiofs" \
+    --graphics spice,listen=127.0.0.1 \
+    --video qxl \
+    --channel spicevmc \
+    --serial pty \
+    --noautoconsole
+
+info "VM '$name' started"
 echo ""
-echo "[TODO] qemu-img create -f qcow2 $VMS_IMAGES/$name.qcow2 $VMS_DEFAULT_DISK"
-echo "[TODO] generate domain XML from template"
-echo "[TODO] virsh define domain.xml"
-echo "[TODO] virsh start $name (boot from ISO)"
-echo "[TODO] run arch-install.sh inside VM"
-echo "[TODO] reboot VM"
-echo "[TODO] run profile/$profile.sh inside VM"
+echo "Complete installation manually:"
+echo "  1. vms viewer $name"
+echo "  2. Wait for Arch ISO to boot"
+echo "  3. Run: archinstall"
 echo ""
-info "VM '$name' ready."
+echo "After installation:"
+echo "  vms stop $name"
+echo "  vms start $name"
