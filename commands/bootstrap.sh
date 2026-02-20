@@ -33,11 +33,6 @@ setup_network() {
     done
     [[ -z "$libvirt_subnet" ]] && die "Could not find free 192.168.x.0/24 subnet"
 
-    # Remove existing network if present
-    sudo virsh net-destroy default 2>/dev/null || true
-    sudo virsh net-undefine default 2>/dev/null || true
-
-    # Create network with free subnet
     cat <<EOF | sudo tee /tmp/vms-default-net.xml >/dev/null
 <network>
   <name>default</name>
@@ -55,7 +50,11 @@ EOF
     sudo virsh net-autostart default
     sudo rm -f /tmp/vms-default-net.xml
 }
-step "Setting up default network" setup_network
+if sudo virsh net-info default &>/dev/null; then
+    info "Default network already exists, skipping"
+else
+    step "Setting up default network" setup_network
+fi
 
 step "Adding user to libvirt group" \
     sudo usermod -aG libvirt "$USER"
