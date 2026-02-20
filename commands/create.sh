@@ -6,6 +6,7 @@ profile="$VMS_DEFAULT_PROFILE"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --profile) profile="$2"; shift 2 ;;
+        -v|--verbose) VMS_VERBOSE=1; shift ;;
         -*) die "unknown option: $1" ;;
         *) name="$1"; shift ;;
     esac
@@ -38,35 +39,35 @@ initrd="$kernel_dir/initramfs-linux.img"
 
 # Extract kernel/initrd from ISO if not present
 if [[ ! -f "$kernel" ]] || [[ ! -f "$initrd" ]]; then
-    info "Extracting kernel and initrd from ISO..."
-    sudo mkdir -p "$kernel_dir"
-    tmp_mount=$(mktemp -d)
-    sudo mount -o loop,ro "$VMS_ARCH_ISO" "$tmp_mount"
-    sudo cp "$tmp_mount/arch/boot/x86_64/vmlinuz-linux" "$kernel"
-    sudo cp "$tmp_mount/arch/boot/x86_64/initramfs-linux.img" "$initrd"
-    sudo umount "$tmp_mount"
-    rmdir "$tmp_mount"
+    extract_kernel() {
+        sudo mkdir -p "$kernel_dir"
+        tmp_mount=$(mktemp -d)
+        sudo mount -o loop,ro "$VMS_ARCH_ISO" "$tmp_mount"
+        sudo cp "$tmp_mount/arch/boot/x86_64/vmlinuz-linux" "$kernel"
+        sudo cp "$tmp_mount/arch/boot/x86_64/initramfs-linux.img" "$initrd"
+        sudo umount "$tmp_mount"
+        rmdir "$tmp_mount"
+    }
+    step "Extracting kernel and initrd from ISO" extract_kernel
 fi
 
 # Get ISO UUID for archiso boot
 iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
 [[ -z "$iso_uuid" ]] && die "Could not determine ISO UUID"
 
-info "Creating VM '$name'"
-info "  profile: $profile"
-info "  disk: $disk"
+info "Creating VM '$name' (profile: $profile)"
 
 # Create VM-specific package cache directory
-info "Creating package cache directory..."
-sudo mkdir -p "$pkg_dir"
+step "Creating package cache directory" \
+    sudo mkdir -p "$pkg_dir"
 
 # Create disk image
-info "Creating disk image..."
-qemu-img create -f qcow2 "$disk" "$VMS_DEFAULT_DISK"
+step "Creating disk image" \
+    qemu-img create -f qcow2 "$disk" "$VMS_DEFAULT_DISK"
 
 # Create VM with virt-install
-info "Creating VM..."
-virt-install \
+step "Creating VM" \
+    virt-install \
     --name "$name" \
     --osinfo archlinux \
     --memory "$VMS_DEFAULT_MEMORY" \
