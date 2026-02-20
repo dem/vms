@@ -117,12 +117,17 @@ fi
 setup_libvirt_uri() {
     echo 'export LIBVIRT_DEFAULT_URI=qemu:///system' >> "$HOME/.bashrc"
 }
+bashrc_changed=0
 if ! grep -q 'LIBVIRT_DEFAULT_URI' "$HOME/.bashrc" 2>/dev/null; then
     step "Adding LIBVIRT_DEFAULT_URI to ~/.bashrc" setup_libvirt_uri
+    bashrc_changed=1
 fi
 
 info "Bootstrap complete."
 echo ""
 echo "NOTE: Log out and back in for group changes to take effect."
+if [[ "$bashrc_changed" == "1" ]]; then
+    echo "      Or run: export LIBVIRT_DEFAULT_URI=qemu:///system"
+fi
 echo ""
 echo "Next: vms create <name>"
