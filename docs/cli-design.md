@@ -64,7 +64,7 @@ vms                     # Main entry point (bash)
 ├── lib/
 │   ├── common.sh
 │   ├── config.sh
-│   └── console-install.sh
+│   └── console.sh
 ├── guest/                  # scripts that run inside VM
 │   ├── install.sh
 │   └── profiles/

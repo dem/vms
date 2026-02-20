@@ -1,0 +1,17 @@
+#!/usr/bin/expect -f
+# Simple command execution via virsh console
+# Usage: console-run.exp <vm> <command> <done_marker> <fail_marker>
+
+source [file dirname [info script]]/console-common.exp
+
+set vm_name [lindex $argv 0]
+set command [lindex $argv 1]
+set marker_done [lindex $argv 2]
+set marker_fail [lindex $argv 3]
+
+connect_console $vm_name
+
+send "$command && echo '$marker_done' || echo '$marker_fail'\r"
+
+wait_for_marker $marker_done $marker_fail
+disconnect

@@ -1,0 +1,28 @@
+#!/usr/bin/expect -f
+# Multi-line payload execution via virsh console
+# Usage: console-payload.exp <vm> <payload_file> <done_marker> <fail_marker>
+
+source [file dirname [info script]]/console-common.exp
+
+set vm_name [lindex $argv 0]
+set payload_file [lindex $argv 1]
+set marker_done [lindex $argv 2]
+set marker_fail [lindex $argv 3]
+
+# Read payload
+set fp [open $payload_file r]
+set payload [read $fp]
+close $fp
+
+connect_console $vm_name
+
+# Send payload line by line
+# TODO: test if sleep can be removed or reduced - 50ms may be overkill for local VM
+set lines [split $payload "\n"]
+foreach line $lines {
+    send "$line\r"
+    sleep 0.05
+}
+
+wait_for_marker $marker_done $marker_fail
+disconnect

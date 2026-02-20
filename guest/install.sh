@@ -154,6 +154,5 @@ sed -i '/^\[options\]/a CacheDir = /var/cache/pacman/pkg/\nCacheDir = /var/cache
 CHROOT_EOF
 
 # 7. Finalize
-echo ""
-echo "INSTALL_FINISHED_MARKER_12345"
 umount -R /mnt
+echo "=== Installation Complete ==="
