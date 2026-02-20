@@ -104,8 +104,25 @@ if [[ ! -f "$user_passwd" ]]; then
     info "env/user_passwd created"
 fi
 
+# Symlink vms to ~/.local/bin
+install_symlink() {
+    mkdir -p "$HOME/.local/bin"
+    ln -s "$VMS_ROOT/vms" "$HOME/.local/bin/vms"
+}
+if [[ ! -L "$HOME/.local/bin/vms" ]]; then
+    step "Symlinking vms to ~/.local/bin" install_symlink
+fi
+
+# Set LIBVIRT_DEFAULT_URI in ~/.bashrc
+setup_libvirt_uri() {
+    echo 'export LIBVIRT_DEFAULT_URI=qemu:///system' >> "$HOME/.bashrc"
+}
+if ! grep -q 'LIBVIRT_DEFAULT_URI' "$HOME/.bashrc" 2>/dev/null; then
+    step "Adding LIBVIRT_DEFAULT_URI to ~/.bashrc" setup_libvirt_uri
+fi
+
 info "Bootstrap complete."
 echo ""
 echo "NOTE: Log out and back in for group changes to take effect."
 echo ""
-echo "Next: ./vms create <name>"
+echo "Next: vms create <name>"
