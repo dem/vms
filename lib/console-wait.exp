@@ -1,0 +1,22 @@
+#!/usr/bin/expect -f
+# Wait for VM console to show a login prompt or shell prompt
+# Usage: console-wait.exp <vm>
+
+set timeout 10
+set vm_name [lindex $argv 0]
+
+log_user 0
+
+spawn virsh -c qemu:///system console $vm_name
+
+expect {
+    "Escape character" { send "\r" }
+    timeout { exit 1 }
+}
+
+expect {
+    -re "login:" { send "\x1d"; expect eof; exit 0 }
+    -re "\\$" { send "\x1d"; expect eof; exit 0 }
+    -re "#" { send "\x1d"; expect eof; exit 0 }
+    timeout { send "\x1d"; expect eof; exit 1 }
+}

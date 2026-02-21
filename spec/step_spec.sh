@@ -59,3 +59,19 @@ Describe "step()"
     End
   End
 End
+
+Describe "info()"
+  Include lib/common.sh
+
+  It "prints plain message in normal mode"
+    VMS_VERBOSE=0
+    When call info "Hello"
+    The output should eq "Hello"
+  End
+
+  It "prints ==> prefix in verbose mode"
+    VMS_VERBOSE=1
+    When call info "Hello"
+    The output should eq "==> Hello"
+  End
+End

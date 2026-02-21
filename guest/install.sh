@@ -10,11 +10,9 @@ USERNAME="${2:?username required}"
 ROOT_HASH="${3:?root_hash required}"
 USER_HASH="${4:?user_hash required}"
 
-echo "=== Starting Arch Linux Installation ==="
 echo "Target disk: $DISK"
 echo "Hostname: $HOSTNAME"
 echo "Username: $USERNAME"
-echo ""
 
 # Verify we're in the live environment
 if [ ! -f /etc/arch-release ]; then
@@ -65,7 +63,9 @@ mount -t virtiofs pkg /mnt/var/cache/pacman/pkg 2>/dev/null || true
 
 # 4. Install base system
 echo "=== Installing base system ==="
-pacstrap -K /mnt base linux mkinitcpio networkmanager sudo vi less
+cp /etc/pacman.conf /tmp/pacman-vm.conf
+sed -i '/^\[options\]/a CacheDir = /mnt/var/cache/pacman/pkg/\nCacheDir = /mnt/var/cache/pacman/pkg-host/' /tmp/pacman-vm.conf
+pacstrap -K -C /tmp/pacman-vm.conf /mnt base linux mkinitcpio networkmanager sudo vi less
 
 # 5. Generate fstab
 echo "=== Generating fstab ==="

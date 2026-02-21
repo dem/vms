@@ -2,7 +2,7 @@ Describe "create helpers"
   Include lib/common.sh
   Include lib/vm.sh
 
-  Describe "wait_for_console()"
+  Describe "wait_for_boot()"
     setup() {
       mock_dir=$(mktemp -d)
       mkdir -p "$mock_dir/lib"
@@ -17,7 +17,55 @@ Describe "create helpers"
     print_dots() { :; }
     stop_dots() { :; }
 
-    It "succeeds when console responds on first try"
+    It "succeeds when console prompt appears on first try"
+      # Mock expect to succeed immediately
+      expect() { return 0; }
+
+      When call wait_for_boot "testvm"
+      The status should eq 0
+    End
+
+    It "succeeds when console prompt appears after retries"
+      expect() {
+        local f="/tmp/shellspec_expect_counter"
+        local c=$(cat "$f" 2>/dev/null || echo 0)
+        c=$((c + 1))
+        echo "$c" > "$f"
+        [ "$c" -ge 3 ]
+      }
+      echo 0 > /tmp/shellspec_expect_counter
+
+      When call wait_for_boot "testvm"
+      The status should eq 0
+    End
+
+    It "fails after timeout when console never appears"
+      expect() { return 1; }
+
+      When run wait_for_boot "testvm"
+      The status should eq 1
+      The stderr should include "Timed out waiting for 'testvm' to boot"
+    End
+  End
+
+  Describe "wait_for_console()"
+    setup() {
+      mock_dir=$(mktemp -d)
+      mkdir -p "$mock_dir/lib"
+      VMS_ROOT="$mock_dir"
+    }
+    cleanup() { rm -rf "$mock_dir"; }
+    BeforeEach setup
+    AfterEach cleanup
+
+    sleep() { :; }
+    print_dots() { :; }
+    stop_dots() { :; }
+
+    # Mock wait_for_boot to succeed (tested above)
+    wait_for_boot() { return 0; }
+
+    It "succeeds when console.sh run works"
       printf '#!/bin/bash\nexit 0\n' > "$mock_dir/lib/console.sh"
       chmod +x "$mock_dir/lib/console.sh"
 
@@ -25,29 +73,13 @@ Describe "create helpers"
       The status should eq 0
     End
 
-    It "succeeds when console responds after retries"
-      cat > "$mock_dir/lib/console.sh" << 'EOF'
-#!/bin/bash
-counter_file="/tmp/shellspec_console_counter"
-count=$(cat "$counter_file" 2>/dev/null || echo 0)
-count=$((count + 1))
-echo "$count" > "$counter_file"
-[ "$count" -ge 3 ]
-EOF
-      chmod +x "$mock_dir/lib/console.sh"
-      echo 0 > /tmp/shellspec_console_counter
-
-      When call wait_for_console "testvm"
-      The status should eq 0
-    End
-
-    It "fails after timeout when console never responds"
+    It "fails when console.sh run fails"
       printf '#!/bin/bash\nexit 1\n' > "$mock_dir/lib/console.sh"
       chmod +x "$mock_dir/lib/console.sh"
 
       When run wait_for_console "testvm"
       The status should eq 1
-      The stderr should include "Timed out waiting for console on 'testvm'"
+      The stderr should include "Console on 'testvm' not responding"
     End
   End
 

@@ -75,7 +75,7 @@ step "Creating VM" \
     --vcpus "$VMS_DEFAULT_CPUS" \
     --disk "path=$disk,format=qcow2,bus=virtio" \
     --cdrom "$VMS_ARCH_ISO" \
-    --boot "kernel=$kernel,initrd=$initrd,kernel_args=archisobasedir=arch archisosearchuuid=$iso_uuid console=tty0 console=ttyS0,115200n8" \
+    --boot "uefi,kernel=$kernel,initrd=$initrd,kernel_args=archisobasedir=arch archisosearchuuid=$iso_uuid console=tty0 console=ttyS0,115200n8" \
     --network network=default,model=virtio \
     --filesystem "type=mount,source.dir=$VMS_PKG_CACHE,target.dir=pkg-host,driver.type=virtiofs,readonly=yes" \
     --filesystem "type=mount,source.dir=$pkg_dir,target.dir=pkg,driver.type=virtiofs" \
@@ -85,13 +85,42 @@ step "Creating VM" \
     --serial pty \
     --noautoconsole
 
-info "VM '$name' started"
-echo ""
-echo "Complete installation manually:"
-echo "  1. vms viewer $name"
-echo "  2. Wait for Arch ISO to boot"
-echo "  3. Run: archinstall"
-echo ""
-echo "After installation:"
-echo "  vms stop $name"
-echo "  vms start $name"
+source "$VMS_ROOT/lib/vm.sh"
+
+step "Waiting for live environment" wait_for_console "$name"
+
+install_base_system() {
+    local log
+    log=$(mktemp)
+    trap "rm -f '$log'" RETURN
+
+    info "Installing base system"
+    if [[ "$VMS_VERBOSE" == "1" ]]; then
+        "$VMS_ROOT/lib/console.sh" exec "$@" | tee "$log"
+    else
+        "$VMS_ROOT/lib/console.sh" exec "$@" 2>&1 | tee "$log" | \
+            sed -un 's/.*=== \(.*\) ===.*/ \1/p'
+    fi || {
+        echo "FAILED: Installing base system" >&2
+        echo "--- output ---" >&2
+        cat "$log" >&2
+        exit 1
+    }
+}
+install_base_system "$name" "$VMS_ROOT/guest/install.sh" \
+    "$name" "$USER" "$(cat "$VMS_ROOT/env/root_passwd")" "$(cat "$VMS_ROOT/env/user_passwd")"
+
+step "Stopping VM" stop_vm "$name"
+
+reconfigure_boot() {
+    virt-xml "$name" --remove-device --disk device=cdrom
+    virsh dumpxml "$name" | sed '/<kernel>/d; /<initrd>/d; /<cmdline>/d' | virsh define /dev/stdin
+    virt-xml "$name" --edit --boot hd
+}
+step "Reconfiguring boot" reconfigure_boot
+
+step "Starting VM" virsh start "$name"
+
+step "Waiting for boot" wait_for_boot "$name"
+
+info "VM '$name' ready"

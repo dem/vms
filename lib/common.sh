@@ -29,7 +29,13 @@ die() {
     exit 1
 }
 
-info() { echo "$1"; }
+info() {
+    if [[ "$VMS_VERBOSE" == "1" ]]; then
+        echo "==> $1"
+    else
+        echo "$1"
+    fi
+}
 
 step() {
     local msg="$1"; shift
