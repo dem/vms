@@ -55,7 +55,7 @@ fi
 iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
 [[ -z "$iso_uuid" ]] && die "Could not determine ISO UUID"
 
-info "Creating VM '$name' (profile: $profile)"
+info "Creating VM $name profile $profile"
 
 # Create VM-specific package cache directory
 step "Creating package cache directory" \
@@ -66,7 +66,7 @@ step "Creating disk image" \
     qemu-img create -f qcow2 "$disk" "$VMS_DEFAULT_DISK"
 
 # Create VM with virt-install
-step "Creating VM" \
+step "Defining VM and booting ISO" \
     virt-install \
     --name "$name" \
     --osinfo archlinux \
@@ -117,10 +117,10 @@ reconfigure_boot() {
     virsh dumpxml "$name" | sed '/<kernel>/d; /<initrd>/d; /<cmdline>/d' | virsh define /dev/stdin
     virt-xml "$name" --edit --boot hd
 }
-step "Reconfiguring boot" reconfigure_boot
+step "Switching to disk boot" reconfigure_boot
 
 step "Starting VM" virsh start "$name"
 
 step "Waiting for boot" wait_for_boot "$name"
 
-info "VM '$name' ready"
+info "VM $name ready"

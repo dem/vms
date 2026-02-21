@@ -62,7 +62,7 @@ mount -t virtiofs pkg-host /mnt/var/cache/pacman/pkg-host 2>/dev/null || true
 mount -t virtiofs pkg /mnt/var/cache/pacman/pkg 2>/dev/null || true
 
 # 4. Install base system
-echo "=== Installing base system ==="
+echo "=== Installing packages ==="
 cp /etc/pacman.conf /tmp/pacman-vm.conf
 sed -i '/^\[options\]/a CacheDir = /mnt/var/cache/pacman/pkg/\nCacheDir = /mnt/var/cache/pacman/pkg-host/' /tmp/pacman-vm.conf
 pacstrap -K -C /tmp/pacman-vm.conf /mnt base linux mkinitcpio networkmanager sudo vi less
