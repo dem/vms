@@ -35,14 +35,14 @@ step() {
     local msg="$1"; shift
     if [[ "$VMS_VERBOSE" == "1" ]]; then
         echo "==> $msg"
-        "$@"
+        "$@" 3>&1
     else
         echo "$msg"
-        local output
-        if output=$("$@" 2>&1); then
+        local output rc=0
+        { output=$("$@" 3>&4 2>&1) || rc=$?; } 4>&1
+        if [[ $rc -eq 0 ]]; then
             return 0
         else
-            local rc=$?
             local reason
             reason=$(echo "$output" | grep -v '^$' | tail -1)
             echo "FAILED: ${reason:-$msg}" >&2
