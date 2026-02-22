@@ -79,6 +79,7 @@ step "Defining VM and booting ISO" \
     --network network=default,model=virtio \
     --filesystem "type=mount,source.dir=$VMS_PKG_CACHE,target.dir=pkg-host,driver.type=virtiofs,readonly=yes" \
     --filesystem "type=mount,source.dir=$pkg_dir,target.dir=pkg,driver.type=virtiofs" \
+    --filesystem "type=mount,source.dir=$VMS_ROOT/guest,target.dir=vms,driver.type=virtiofs,readonly=yes" \
     --graphics spice,listen=127.0.0.1 \
     --video qxl \
     --channel spicevmc \
@@ -89,31 +90,18 @@ source "$VMS_ROOT/lib/vm.sh"
 
 step "Waiting for live environment" wait_for_console "$name"
 
-install_base_system() {
-    local log
-    log=$(mktemp)
-    trap "rm -f '$log'" RETURN
+step "Mounting guest scripts" \
+    "$VMS_ROOT/lib/console.sh" run "$name" "mkdir -p /vms && mount -t virtiofs vms /vms"
 
-    info "Installing base system"
-    if [[ "$VMS_VERBOSE" == "1" ]]; then
-        "$VMS_ROOT/lib/console.sh" exec "$@" | tee "$log"
-    else
-        "$VMS_ROOT/lib/console.sh" exec "$@" 2>&1 | tee "$log" | \
-            sed -un 's/.*=== \(.*\) ===.*/ \1/p'
-    fi || {
-        echo "FAILED: Installing base system" >&2
-        echo "--- output ---" >&2
-        cat "$log" >&2
-        exit 1
-    }
-}
 vm_user="$(cat "$VMS_ROOT/env/user")"
 vm_uid=""
 vm_gid=""
 [[ -f "$VMS_ROOT/env/uid" ]] && vm_uid="$(cat "$VMS_ROOT/env/uid")"
 [[ -f "$VMS_ROOT/env/gid" ]] && vm_gid="$(cat "$VMS_ROOT/env/gid")"
-install_base_system "$name" "$VMS_ROOT/guest/install.sh" \
-    "$name" "$vm_user" "$(cat "$VMS_ROOT/env/root_passwd")" "$(cat "$VMS_ROOT/env/user_passwd")" "$vm_uid" "$vm_gid"
+
+install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid'"
+step "Installing base system" \
+    "$VMS_ROOT/lib/console.sh" run "$name" "$install_cmd"
 
 step "Stopping VM" stop_vm "$name"
 

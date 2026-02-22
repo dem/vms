@@ -63,6 +63,10 @@ mkdir -p /mnt/var/cache/pacman/pkg
 mount -t virtiofs pkg-host /mnt/var/cache/pacman/pkg-host 2>/dev/null || true
 mount -t virtiofs pkg /mnt/var/cache/pacman/pkg 2>/dev/null || true
 
+# Mount guest scripts into target for chroot access
+mkdir -p /mnt/vms
+mount -t virtiofs vms /mnt/vms 2>/dev/null || true
+
 # 4. Install base system
 echo "=== Installing packages ==="
 cp /etc/pacman.conf /tmp/pacman-vm.conf
@@ -78,6 +82,7 @@ echo "" >> /mnt/etc/fstab
 echo "# Shared pacman cache via virtiofs" >> /mnt/etc/fstab
 echo "pkg-host  /var/cache/pacman/pkg-host  virtiofs  ro,nofail  0 0" >> /mnt/etc/fstab
 echo "pkg       /var/cache/pacman/pkg       virtiofs  defaults,nofail  0 0" >> /mnt/etc/fstab
+echo "vms       /vms                        virtiofs  ro,nofail        0 0" >> /mnt/etc/fstab
 
 # Get root partition UUID
 ROOT_UUID=$(blkid -s UUID -o value "${DISK}2")
@@ -152,6 +157,9 @@ systemctl enable NetworkManager
 
 # Pacman cache
 sed -i '/^\[options\]/a CacheDir = /var/cache/pacman/pkg/\nCacheDir = /var/cache/pacman/pkg-host/' /etc/pacman.conf
+
+# Guest scripts mount point
+mkdir -p /vms
 
 CHROOT_EOF
 
