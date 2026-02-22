@@ -60,7 +60,7 @@ fi
 setup_directories() {
     sudo mkdir -p "$VMS_IMAGES"
     sudo mkdir -p "$VMS_ISO"
-    sudo mkdir -p "$VMS_FILESYSTEMS/pkg/shared"
+    sudo mkdir -p "$VMS_FILESYSTEMS/pkg"
     sudo chown root:libvirt "$VMS_IMAGES"
     sudo chmod 775 "$VMS_IMAGES"
     sudo chown root:libvirt "$VMS_ISO"
@@ -68,7 +68,7 @@ setup_directories() {
     sudo chown root:libvirt "$VMS_FILESYSTEMS"
     sudo chmod 775 "$VMS_FILESYSTEMS"
 }
-if [[ ! -d "$VMS_IMAGES" ]] || [[ ! -d "$VMS_ISO" ]] || [[ ! -d "$VMS_FILESYSTEMS/pkg/shared" ]]; then
+if [[ ! -d "$VMS_IMAGES" ]] || [[ ! -d "$VMS_ISO" ]] || [[ ! -d "$VMS_FILESYSTEMS/pkg" ]]; then
     step "Creating directories" setup_directories
 fi
 

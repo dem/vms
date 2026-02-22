@@ -83,6 +83,81 @@ Describe "create helpers"
     End
   End
 
+  Describe "sync_packages()"
+    setup() {
+      pkg_dir=$(mktemp -d)
+      VMS_PKG_CACHE=$(mktemp -d)
+    }
+    cleanup() {
+      rm -rf "$pkg_dir" "$VMS_PKG_CACHE"
+    }
+    BeforeEach setup
+    AfterEach cleanup
+
+    # Override sudo to run commands without privilege
+    sudo() { "$@"; }
+
+    sync_packages() {
+      local pkg sig
+      for pkg in "$pkg_dir"/*.pkg.tar.zst; do
+        [[ -f "$pkg" ]] || continue
+        sig="$pkg.sig"
+        if [[ -f "$sig" ]] && pacman-key --verify "$sig" "$pkg" &>/dev/null; then
+          mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
+        fi
+      done
+      rm -f "$pkg_dir"/*
+    }
+
+    It "moves verified pkg+sig pairs to host cache"
+      touch "$pkg_dir/foo-1.0-1-x86_64.pkg.tar.zst"
+      touch "$pkg_dir/foo-1.0-1-x86_64.pkg.tar.zst.sig"
+      # Mock pacman-key to succeed
+      pacman-key() { return 0; }
+
+      When call sync_packages
+      The status should eq 0
+      The file "$VMS_PKG_CACHE/foo-1.0-1-x86_64.pkg.tar.zst" should be exist
+      The file "$VMS_PKG_CACHE/foo-1.0-1-x86_64.pkg.tar.zst.sig" should be exist
+      The directory "$pkg_dir" should be exist
+    End
+
+    It "skips packages without .sig file"
+      touch "$pkg_dir/nosig-1.0-1-x86_64.pkg.tar.zst"
+      pacman-key() { return 0; }
+
+      When call sync_packages
+      The status should eq 0
+      The file "$VMS_PKG_CACHE/nosig-1.0-1-x86_64.pkg.tar.zst" should not be exist
+      The directory "$pkg_dir" should be exist
+    End
+
+    It "skips packages with invalid signature"
+      touch "$pkg_dir/bad-1.0-1-x86_64.pkg.tar.zst"
+      touch "$pkg_dir/bad-1.0-1-x86_64.pkg.tar.zst.sig"
+      # Mock pacman-key to fail
+      pacman-key() { return 1; }
+
+      When call sync_packages
+      The status should eq 0
+      The file "$VMS_PKG_CACHE/bad-1.0-1-x86_64.pkg.tar.zst" should not be exist
+      The file "$VMS_PKG_CACHE/bad-1.0-1-x86_64.pkg.tar.zst.sig" should not be exist
+      The directory "$pkg_dir" should be exist
+    End
+
+    It "clears per-VM dir contents but keeps directory"
+      touch "$pkg_dir/leftover.pkg.tar.zst"
+      pacman-key() { return 0; }
+
+      dir_is_empty() { [ -z "$(ls -A "$pkg_dir")" ]; }
+
+      When call sync_packages
+      The status should eq 0
+      The directory "$pkg_dir" should be exist
+      Assert dir_is_empty
+    End
+  End
+
   Describe "stop_vm()"
     # Override sleep to avoid delays
     sleep() { :; }
