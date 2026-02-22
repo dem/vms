@@ -8,18 +8,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-step "Installing host dependencies" \
-    sudo pacman -S --needed --noconfirm \
-    qemu-desktop \
-    libvirt \
-    virt-install \
-    virt-viewer \
-    dnsmasq \
-    edk2-ovmf \
-    expect
+needed_pkgs=(qemu-desktop libvirt virt-install virt-viewer dnsmasq edk2-ovmf expect)
+if ! pacman -Qq "${needed_pkgs[@]}" &>/dev/null; then
+    step "Installing host dependencies" \
+        sudo pacman -S --needed --noconfirm "${needed_pkgs[@]}"
+fi
 
-step "Enabling libvirtd" \
-    sudo systemctl enable --now libvirtd
+if ! systemctl is-active --quiet libvirtd; then
+    step "Enabling libvirtd" \
+        sudo systemctl enable --now libvirtd
+fi
 
 setup_network() {
     # Find a free 192.168.x.0/24 subnet (avoid conflicts with host networks)
@@ -50,14 +48,14 @@ EOF
     sudo virsh net-autostart default
     sudo rm -f /tmp/vms-default-net.xml
 }
-if sudo virsh net-info default &>/dev/null; then
-    info "Default network already exists, skipping"
-else
+if ! sudo virsh net-info default &>/dev/null; then
     step "Setting up default network" setup_network
 fi
 
-step "Adding user to libvirt group" \
-    sudo usermod -aG libvirt "$USER"
+if ! id -nG "$USER" | grep -qw libvirt; then
+    step "Adding user to libvirt group" \
+        sudo usermod -aG libvirt "$USER"
+fi
 
 setup_directories() {
     sudo mkdir -p "$VMS_IMAGES"
@@ -70,7 +68,9 @@ setup_directories() {
     sudo chown root:libvirt "$VMS_FILESYSTEMS"
     sudo chmod 775 "$VMS_FILESYSTEMS"
 }
-step "Creating directories" setup_directories
+if [[ ! -d "$VMS_IMAGES" ]] || [[ ! -d "$VMS_ISO" ]] || [[ ! -d "$VMS_FILESYSTEMS/pkg/shared" ]]; then
+    step "Creating directories" setup_directories
+fi
 
 # Download Arch ISO if not present
 if [[ ! -f "$VMS_ARCH_ISO" ]]; then
