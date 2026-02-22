@@ -21,12 +21,12 @@ pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
 
 # Check if VM already exists
 if virsh dominfo "$name" &>/dev/null; then
-    die "VM '$name' already exists"
+    die "VM $name already exists"
 fi
 
 # Check if disk already exists
 if [[ -f "$disk" ]]; then
-    die "Disk '$disk' already exists"
+    die "Disk $disk already exists"
 fi
 
 # Check ISO exists
@@ -102,9 +102,25 @@ vm_gid=""
 [[ -f "$VMS_ROOT/env/gid" ]] && vm_gid="$(cat "$VMS_ROOT/env/gid")"
 
 install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid' '$noautologin'"
-info "Installing base system"
-"$VMS_ROOT/lib/console.sh" run "$name" "$install_cmd" 2>&1 | \
-    if [[ "$VMS_VERBOSE" == "1" ]]; then cat; else sed -un 's/.*=== \(.*\) ===.*/ \1/p'; fi
+install_base_system() {
+    local log
+    log=$(mktemp)
+    trap "rm -f '$log'" RETURN
+
+    info "Installing base system"
+    if [[ "$VMS_VERBOSE" == "1" ]]; then
+        "$VMS_ROOT/lib/console.sh" run "$@" | tee "$log"
+    else
+        "$VMS_ROOT/lib/console.sh" run "$@" 2>&1 | tee "$log" | \
+            sed -un 's/.*=== \(.*\) ===.*/ \1/p'
+    fi || {
+        echo "FAILED: Installing base system" >&2
+        echo "--- output ---" >&2
+        cat "$log" >&2
+        exit 1
+    }
+}
+install_base_system "$name" "$install_cmd"
 
 step "Stopping VM" stop_vm "$name"
 
