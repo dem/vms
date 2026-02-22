@@ -29,29 +29,13 @@ if [[ -f "$disk" ]]; then
     die "Disk $disk already exists"
 fi
 
-# Check ISO exists
-if [[ ! -f "$VMS_ARCH_ISO" ]]; then
-    die "Arch ISO not found at $VMS_ARCH_ISO"
-fi
+# Ensure Arch ISO is present and fresh, extract kernel/initrd
+"$VMS_ROOT/lib/iso.sh"
 
 # Paths for direct kernel boot (extracted from ISO)
 kernel_dir="$VMS_ISO/arch-boot"
 kernel="$kernel_dir/vmlinuz-linux"
 initrd="$kernel_dir/initramfs-linux.img"
-
-# Extract kernel/initrd from ISO if not present
-if [[ ! -f "$kernel" ]] || [[ ! -f "$initrd" ]]; then
-    extract_kernel() {
-        sudo mkdir -p "$kernel_dir"
-        tmp_mount=$(mktemp -d)
-        sudo mount -o loop,ro "$VMS_ARCH_ISO" "$tmp_mount"
-        sudo cp "$tmp_mount/arch/boot/x86_64/vmlinuz-linux" "$kernel"
-        sudo cp "$tmp_mount/arch/boot/x86_64/initramfs-linux.img" "$initrd"
-        sudo umount "$tmp_mount"
-        rmdir "$tmp_mount"
-    }
-    step "Extracting kernel and initrd from ISO" extract_kernel
-fi
 
 # Get ISO UUID for archiso boot
 iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")

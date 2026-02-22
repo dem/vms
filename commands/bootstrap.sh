@@ -72,12 +72,8 @@ if [[ ! -d "$VMS_IMAGES" ]] || [[ ! -d "$VMS_ISO" ]] || [[ ! -d "$VMS_FILESYSTEM
     step "Creating directories" setup_directories
 fi
 
-# Download Arch ISO if not present
-if [[ ! -f "$VMS_ARCH_ISO" ]]; then
-    step "Downloading Arch Linux ISO" \
-        sudo curl -L -o "$VMS_ARCH_ISO" \
-        https://geo.mirror.pkgbuild.com/iso/latest/archlinux-x86_64.iso
-fi
+# Ensure Arch ISO is present and fresh
+"$VMS_ROOT/lib/iso.sh"
 
 # Create passwd files if not exist
 mkdir -p "$VMS_ROOT/env"
