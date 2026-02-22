@@ -1,18 +1,20 @@
-# vms create <name> [--profile <profile>]
+# vms create <name> [--profile <profile>] [--noautologin]
 
 name=""
 profile="$VMS_DEFAULT_PROFILE"
+noautologin=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --profile) profile="$2"; shift 2 ;;
+        --noautologin) noautologin=1; shift ;;
         -v|--verbose) VMS_VERBOSE=1; shift ;;
         -*) die "unknown option: $1" ;;
         *) name="$1"; shift ;;
     esac
 done
 
-[[ -z "$name" ]] && die "usage: vms create <name> [--profile <profile>]"
+[[ -z "$name" ]] && die "usage: vms create <name> [--profile <profile>] [--noautologin]"
 
 disk="$VMS_IMAGES/$name.qcow2"
 pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
@@ -99,9 +101,10 @@ vm_gid=""
 [[ -f "$VMS_ROOT/env/uid" ]] && vm_uid="$(cat "$VMS_ROOT/env/uid")"
 [[ -f "$VMS_ROOT/env/gid" ]] && vm_gid="$(cat "$VMS_ROOT/env/gid")"
 
-install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid'"
-step "Installing base system" \
-    "$VMS_ROOT/lib/console.sh" run "$name" "$install_cmd"
+install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid' '$noautologin'"
+info "Installing base system"
+"$VMS_ROOT/lib/console.sh" run "$name" "$install_cmd" 2>&1 | \
+    if [[ "$VMS_VERBOSE" == "1" ]]; then cat; else sed -un 's/.*=== \(.*\) ===.*/ \1/p'; fi
 
 step "Stopping VM" stop_vm "$name"
 

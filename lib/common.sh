@@ -16,6 +16,7 @@ Commands:
 
 Options:
     --profile <name>    Profile for create (default: gui)
+    --noautologin       Skip autologin setup on create
     -v, --verbose       Show full command output
     --help              Show this help
 EOF

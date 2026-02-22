@@ -2,7 +2,7 @@
 set -e
 
 # Arch Linux Automated Installation Script for VMs
-# Usage: ./arch-install.sh <hostname> <username> <root_hash> <user_hash> [uid] [gid]
+# Usage: ./arch-install.sh <hostname> <username> <root_hash> <user_hash> [uid] [gid] [noautologin]
 
 DISK="/dev/vda"
 HOSTNAME="${1:?hostname required}"
@@ -11,6 +11,7 @@ ROOT_HASH="${3:?root_hash required}"
 USER_HASH="${4:?user_hash required}"
 USER_UID="${5:-}"
 USER_GID="${6:-}"
+NOAUTOLOGIN="${7:-}"
 
 echo "Target disk: $DISK"
 echo "Hostname: $HOSTNAME"
@@ -127,14 +128,6 @@ sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 # Serial console
 systemctl enable serial-getty@ttyS0.service
 
-# Auto-login on tty1
-mkdir -p /etc/systemd/system/getty@tty1.service.d
-cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin $USERNAME %I \$TERM
-EOF
-
 # Bootloader
 bootctl install
 cat > /boot/loader/loader.conf <<EOF
@@ -162,6 +155,13 @@ sed -i '/^\[options\]/a CacheDir = /var/cache/pacman/pkg/\nCacheDir = /var/cache
 mkdir -p /vms
 
 CHROOT_EOF
+
+# Autologin configuration
+if [[ -z "$NOAUTOLOGIN" ]]; then
+    echo "=== Configuring autologin ==="
+    arch-chroot /mnt /vms/autologin.sh on root
+    arch-chroot /mnt /vms/autologin.sh on user
+fi
 
 # 7. Finalize
 umount -R /mnt
