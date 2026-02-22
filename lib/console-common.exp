@@ -37,8 +37,8 @@ proc wait_for_marker {marker_done marker_fail} {
     expect {
         "\n$marker_done" { sleep 1 }
         "\r\n$marker_done" { sleep 1 }
-        "\n$marker_fail" { puts "\n=== Command failed ==="; send "\x1d"; expect eof; exit 1 }
-        "\r\n$marker_fail" { puts "\n=== Command failed ==="; send "\x1d"; expect eof; exit 1 }
+        "\n$marker_fail" { send "\x1d"; expect eof; exit 1 }
+        "\r\n$marker_fail" { send "\x1d"; expect eof; exit 1 }
         timeout { puts "Timeout waiting for completion"; send "\x1d"; expect eof; exit 1 }
     }
 }
