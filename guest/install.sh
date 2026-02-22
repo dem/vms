@@ -2,13 +2,15 @@
 set -e
 
 # Arch Linux Automated Installation Script for VMs
-# Usage: ./arch-install.sh <hostname> <username> <root_hash> <user_hash>
+# Usage: ./arch-install.sh <hostname> <username> <root_hash> <user_hash> [uid] [gid]
 
 DISK="/dev/vda"
 HOSTNAME="${1:?hostname required}"
 USERNAME="${2:?username required}"
 ROOT_HASH="${3:?root_hash required}"
 USER_HASH="${4:?user_hash required}"
+USER_UID="${5:-}"
+USER_GID="${6:-}"
 
 echo "Target disk: $DISK"
 echo "Hostname: $HOSTNAME"
@@ -109,8 +111,8 @@ EOF
 usermod -p '$ROOT_HASH' root
 
 # Create user
-groupadd "$USERNAME"
-useradd -m -g "$USERNAME" -s /bin/bash "$USERNAME"
+groupadd ${USER_GID:+-g $USER_GID} "$USERNAME"
+useradd -m -g "$USERNAME" ${USER_UID:+-u $USER_UID} -s /bin/bash "$USERNAME"
 usermod -p '$USER_HASH' "$USERNAME"
 usermod -aG wheel "$USERNAME"
 

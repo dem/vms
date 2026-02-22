@@ -107,8 +107,13 @@ install_base_system() {
         exit 1
     }
 }
+vm_user="$(cat "$VMS_ROOT/env/user")"
+vm_uid=""
+vm_gid=""
+[[ -f "$VMS_ROOT/env/uid" ]] && vm_uid="$(cat "$VMS_ROOT/env/uid")"
+[[ -f "$VMS_ROOT/env/gid" ]] && vm_gid="$(cat "$VMS_ROOT/env/gid")"
 install_base_system "$name" "$VMS_ROOT/guest/install.sh" \
-    "$name" "$USER" "$(cat "$VMS_ROOT/env/root_passwd")" "$(cat "$VMS_ROOT/env/user_passwd")"
+    "$name" "$vm_user" "$(cat "$VMS_ROOT/env/root_passwd")" "$(cat "$VMS_ROOT/env/user_passwd")" "$vm_uid" "$vm_gid"
 
 step "Stopping VM" stop_vm "$name"
 

@@ -85,23 +85,46 @@ root_passwd="$VMS_ROOT/env/root_passwd"
 user_passwd="$VMS_ROOT/env/user_passwd"
 
 if [[ ! -f "$root_passwd" ]]; then
-    echo -n "Enter root password (default: vm): "
+    echo -n "Enter VM root password: "
     read -s root_pass
     echo
-    root_pass="${root_pass:-vm}"
-    openssl passwd -6 "$root_pass" > "$root_passwd"
+    [[ -z "$root_pass" ]] && die "root password required"
+    echo "$root_pass" | openssl passwd -6 -stdin > "$root_passwd"
     chmod 600 "$root_passwd"
     info "env/root_passwd created"
 fi
 
 if [[ ! -f "$user_passwd" ]]; then
-    echo -n "Enter user password (default: vm): "
+    echo -n "Enter VM user password: "
     read -s user_pass
     echo
-    user_pass="${user_pass:-vm}"
-    openssl passwd -6 "$user_pass" > "$user_passwd"
+    [[ -z "$user_pass" ]] && die "user password required"
+    echo "$user_pass" | openssl passwd -6 -stdin > "$user_passwd"
     chmod 600 "$user_passwd"
     info "env/user_passwd created"
+fi
+
+user_file="$VMS_ROOT/env/user"
+uid_file="$VMS_ROOT/env/uid"
+gid_file="$VMS_ROOT/env/gid"
+
+if [[ ! -f "$user_file" ]]; then
+    echo -n "Enter VM username (default: $USER): "
+    read vm_user
+    vm_user="${vm_user:-$USER}"
+    echo "$vm_user" > "$user_file"
+    info "env/user created ($vm_user)"
+fi
+
+vm_user="$(cat "$user_file")"
+if [[ ! -f "$uid_file" ]] && id -u "$vm_user" &>/dev/null; then
+    id -u "$vm_user" > "$uid_file"
+    info "env/uid created ($(cat "$uid_file"))"
+fi
+
+if [[ ! -f "$gid_file" ]] && id -g "$vm_user" &>/dev/null; then
+    id -g "$vm_user" > "$gid_file"
+    info "env/gid created ($(cat "$gid_file"))"
 fi
 
 # Symlink vms to ~/.local/bin
@@ -124,10 +147,22 @@ if ! grep -q 'LIBVIRT_DEFAULT_URI' "$HOME/.bashrc" 2>/dev/null; then
 fi
 
 info "Bootstrap complete."
-echo ""
-echo "NOTE: Log out and back in for group changes to take effect."
-if [[ "$bashrc_changed" == "1" ]]; then
-    echo "      Or run: export LIBVIRT_DEFAULT_URI=qemu:///system"
+
+needs_relogin=0
+if ! id -nG "$USER" | grep -qw libvirt; then
+    needs_relogin=1
 fi
+if [[ -z "${LIBVIRT_DEFAULT_URI:-}" ]]; then
+    needs_relogin=1
+fi
+
+if [[ "$needs_relogin" == "1" ]]; then
+    echo ""
+    echo "NOTE: Log out and back in for group/env changes to take effect."
+    if [[ -z "${LIBVIRT_DEFAULT_URI:-}" ]]; then
+        echo "      Or run: export LIBVIRT_DEFAULT_URI=qemu:///system"
+    fi
+fi
+
 echo ""
 echo "Next: vms create <name>"
