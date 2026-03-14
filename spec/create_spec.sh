@@ -103,7 +103,7 @@ Describe "create helpers"
         [[ -f "$pkg" ]] || continue
         sig="$pkg.sig"
         if [[ -f "$sig" ]] && pacman-key --verify "$sig" "$pkg" &>/dev/null; then
-          mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
+          [[ -f "$VMS_PKG_CACHE/${pkg##*/}" ]] || mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
         fi
       done
       rm -f "$pkg_dir"/*
@@ -143,6 +143,17 @@ Describe "create helpers"
       The file "$VMS_PKG_CACHE/bad-1.0-1-x86_64.pkg.tar.zst" should not be exist
       The file "$VMS_PKG_CACHE/bad-1.0-1-x86_64.pkg.tar.zst.sig" should not be exist
       The directory "$pkg_dir" should be exist
+    End
+
+    It "skips packages already in host cache"
+      touch "$pkg_dir/exists-1.0-1-x86_64.pkg.tar.zst"
+      touch "$pkg_dir/exists-1.0-1-x86_64.pkg.tar.zst.sig"
+      echo "original" > "$VMS_PKG_CACHE/exists-1.0-1-x86_64.pkg.tar.zst"
+      pacman-key() { return 0; }
+
+      When call sync_packages
+      The status should eq 0
+      The contents of file "$VMS_PKG_CACHE/exists-1.0-1-x86_64.pkg.tar.zst" should eq "original"
     End
 
     It "clears per-VM dir contents but keeps directory"

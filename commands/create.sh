@@ -112,7 +112,7 @@ sync_packages() {
         [[ -f "$pkg" ]] || continue
         sig="$pkg.sig"
         if [[ -f "$sig" ]] && sudo pacman-key --verify "$sig" "$pkg" &>/dev/null; then
-            sudo mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
+            [[ -f "$VMS_PKG_CACHE/${pkg##*/}" ]] || sudo mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
         fi
     done
     [[ -d "$pkg_dir" ]] && sudo rm -f "$pkg_dir"/*
