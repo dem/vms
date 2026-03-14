@@ -76,7 +76,7 @@ fi
 "$VMS_ROOT/lib/iso.sh"
 
 # Create passwd files if not exist
-mkdir -p "$VMS_ROOT/env"
+mkdir -p "$VMS_ROOT/env/vv"
 root_passwd="$VMS_ROOT/env/root_passwd"
 user_passwd="$VMS_ROOT/env/user_passwd"
 

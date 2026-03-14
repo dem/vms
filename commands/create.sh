@@ -41,7 +41,12 @@ initrd="$kernel_dir/initramfs-linux.img"
 iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
 [[ -z "$iso_uuid" ]] && die "Could not determine ISO UUID"
 
-info "Creating VM $name profile $profile"
+# Allocate static SPICE port
+port_file="$VMS_ROOT/env/next_spice_port"
+spice_port=$(cat "$port_file" 2>/dev/null || echo 5900)
+echo $((spice_port + 1)) > "$port_file"
+
+info "Creating VM $name profile $profile (SPICE port $spice_port)"
 
 # Create VM-specific package cache directory
 step "Creating package cache directory" \
@@ -71,6 +76,18 @@ step "Defining VM and booting ISO" \
     --channel spicevmc \
     --serial pty \
     --noautoconsole
+
+# Set static SPICE port (virt-install doesn't support autoport=no, so redefine via XML)
+set_spice_port() {
+    virsh dumpxml "$name" | \
+        sed "s/<graphics type='spice'[^>]*/<graphics type='spice' port='$spice_port' autoport='no' listen='127.0.0.1'/" | \
+        virsh define /dev/stdin
+}
+step "Setting SPICE port $spice_port" set_spice_port
+
+# Generate viewer config
+mkdir -p "$VMS_ROOT/env/vv"
+sed "s/{{PORT}}/$spice_port/" "$VMS_ROOT/templates/viewer.vv" > "$VMS_ROOT/env/vv/$name.vv"
 
 source "$VMS_ROOT/lib/vm.sh"
 

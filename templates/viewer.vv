@@ -1,0 +1,10 @@
+[virt-viewer]
+type=spice
+host=127.0.0.1
+port={{PORT}}
+toggle-fullscreen=f11
+release-cursor=super
+resize-guest=always
+scaling=off
+zoom=100
+auto-resize=always
