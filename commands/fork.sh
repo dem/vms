@@ -1,9 +1,9 @@
-# vms clone <source> <name>
+# vms fork <source> <name>
 
 source="${1:-}"
 name="${2:-}"
 
-[[ -z "$source" || -z "$name" ]] && die "usage: vms clone <source> <name>"
+[[ -z "$source" || -z "$name" ]] && die "usage: vms fork <source> <name>"
 
 source_disk="$VMS_IMAGES/$source.qcow2"
 disk="$VMS_IMAGES/$name.qcow2"
@@ -32,14 +32,14 @@ port_file="$VMS_ROOT/env/next_spice_port"
 spice_port=$(cat "$port_file" 2>/dev/null || echo 5900)
 echo $((spice_port + 1)) > "$port_file"
 
-info "Cloning '$source' to '$name' (SPICE port $spice_port)"
+info "Forking '$source' to '$name' (SPICE port $spice_port)"
 
 # Create package cache directory
 sudo mkdir -p "$pkg_dir"
 
-# Full copy of disk
-step "Copying disk" \
-    cp "$source_disk" "$disk"
+# Create CoW clone using backing file
+step "Creating disk (backing file)" \
+    qemu-img create -f qcow2 -b "$source_disk" -F qcow2 "$disk"
 
 # Clone VM definition
 step "Cloning VM definition" \

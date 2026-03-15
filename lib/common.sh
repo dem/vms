@@ -5,12 +5,13 @@ Usage: vms <command> [args]
 Commands:
     bootstrap           Install host dependencies
     create <vm>         Create new VM
-    clone <src> <vm>    Clone existing VM
+    clone <src> <vm>    Full copy VM
+    fork <src> <vm>     Linked copy VM
     start <vm>          Start VM
-    stop <vm>           Stop VM (graceful)
+    stop <vm>           Graceful stop VM
     kill <vm>           Force stop VM
     console <vm>        Serial console (root)
-    viewer <vm>         SPICE viewer (GUI)
+    viewer <vm>         GUI viewer (user)
     list                List all VMs
     destroy <vm>        Remove VM and storage
 

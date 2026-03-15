@@ -14,6 +14,7 @@ case "$cmd" in
     bootstrap) source "$VMS_ROOT/commands/bootstrap.sh" "$@" ;;
     create)    source "$VMS_ROOT/commands/create.sh" "$@" ;;
     clone)     source "$VMS_ROOT/commands/clone.sh" "$@" ;;
+    fork)      source "$VMS_ROOT/commands/fork.sh" "$@" ;;
     start)     source "$VMS_ROOT/commands/start.sh" "$@" ;;
     stop)      source "$VMS_ROOT/commands/stop.sh" "$@" ;;
     kill)      source "$VMS_ROOT/commands/kill.sh" "$@" ;;
