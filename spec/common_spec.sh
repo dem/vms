@@ -27,10 +27,9 @@ Describe "validate_name()"
     The stderr should include "Invalid VM name"
   End
 
-  It "rejects name with dots"
-    When run validate_name "bad.name"
-    The status should eq 1
-    The stderr should include "Invalid VM name"
+  It "accepts name with dots"
+    When call validate_name "vm.1"
+    The status should eq 0
   End
 
   It "rejects name with slashes"

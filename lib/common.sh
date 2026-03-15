@@ -27,7 +27,7 @@ EOF
 VMS_VERBOSE=${VMS_VERBOSE:-0}
 
 validate_name() {
-    [[ "$1" =~ ^[a-zA-Z0-9_-]+$ ]] || die "Invalid VM name '$1': use only letters, numbers, hyphens, underscores"
+    [[ "$1" =~ ^[a-zA-Z0-9._-]+$ ]] || die "Invalid VM name '$1': use only letters, numbers, hyphens, underscores, dots"
 }
 
 allocate_spice_port() {
