@@ -15,12 +15,12 @@ case "$cmd" in
     create)    source "$VMS_ROOT/commands/create.sh" "$@" ;;
     clone)     source "$VMS_ROOT/commands/clone.sh" "$@" ;;
     fork)      source "$VMS_ROOT/commands/fork.sh" "$@" ;;
-    start)     source "$VMS_ROOT/commands/start.sh" "$@" ;;
+    s|start)   source "$VMS_ROOT/commands/start.sh" "$@" ;;
     stop)      source "$VMS_ROOT/commands/stop.sh" "$@" ;;
     kill)      source "$VMS_ROOT/commands/kill.sh" "$@" ;;
-    console)   source "$VMS_ROOT/commands/console.sh" "$@" ;;
-    viewer)    source "$VMS_ROOT/commands/viewer.sh" "$@" ;;
-    list)      source "$VMS_ROOT/commands/list.sh" "$@" ;;
+    c|console) source "$VMS_ROOT/commands/console.sh" "$@" ;;
+    v|viewer)  source "$VMS_ROOT/commands/viewer.sh" "$@" ;;
+    l|list)    source "$VMS_ROOT/commands/list.sh" "$@" ;;
     destroy)   source "$VMS_ROOT/commands/destroy.sh" "$@" ;;
     help|--help|-h) usage ;;
     *) die "unknown command: $cmd" ;;
