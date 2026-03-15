@@ -73,6 +73,7 @@ echo "=== Installing packages ==="
 cp /etc/pacman.conf /tmp/pacman-vm.conf
 sed -i '/^\[options\]/a CacheDir = /mnt/var/cache/pacman/pkg/\nCacheDir = /mnt/var/cache/pacman/pkg-host/' /tmp/pacman-vm.conf
 pacstrap -K -C /tmp/pacman-vm.conf /mnt base linux mkinitcpio networkmanager sudo vi less
+rm -f /tmp/pacman-vm.conf
 
 # 5. Generate fstab
 echo "=== Generating fstab ==="
