@@ -31,22 +31,10 @@ setup_network() {
     done
     [[ -z "$libvirt_subnet" ]] && die "Could not find free 192.168.x.0/24 subnet"
 
-    cat <<EOF | sudo tee /tmp/vms-default-net.xml >/dev/null
-<network>
-  <name>default</name>
-  <forward mode='nat'/>
-  <bridge name='virbr0' stp='on' delay='0'/>
-  <ip address='192.168.$libvirt_subnet.1' netmask='255.255.255.0'>
-    <dhcp>
-      <range start='192.168.$libvirt_subnet.2' end='192.168.$libvirt_subnet.254'/>
-    </dhcp>
-  </ip>
-</network>
-EOF
-    sudo virsh net-define /tmp/vms-default-net.xml
+    sed "s/{{SUBNET}}/$libvirt_subnet/g" "$VMS_ROOT/templates/network.xml" | \
+        sudo virsh net-define /dev/stdin
     sudo virsh net-start default
     sudo virsh net-autostart default
-    sudo rm -f /tmp/vms-default-net.xml
 }
 if ! sudo virsh net-info default &>/dev/null; then
     step "Setting up default network" setup_network
