@@ -2,6 +2,7 @@
 
 name="${1:-}"
 [[ -z "$name" ]] && die "usage: vms kill <name>"
+validate_name "$name"
 
 if ! virsh dominfo "$name" &>/dev/null; then
     die "VM '$name' does not exist"

@@ -15,6 +15,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -z "$name" ]] && die "usage: vms create <name> [--profile <profile>] [--noautologin]"
+validate_name "$name"
 
 disk="$VMS_IMAGES/$name.qcow2"
 pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
@@ -29,6 +30,16 @@ if [[ -f "$disk" ]]; then
     die "Disk $disk already exists"
 fi
 
+# Cleanup on failure
+cleanup_on_failure() {
+    virsh destroy "$name" 2>/dev/null || true
+    virsh undefine "$name" --nvram 2>/dev/null || true
+    rm -f "$disk"
+    sudo rm -rf "$pkg_dir"
+    rm -f "$VMS_ROOT/env/vv/$name.vv"
+}
+trap cleanup_on_failure EXIT
+
 # Ensure Arch ISO is present and fresh, extract kernel/initrd
 "$VMS_ROOT/lib/iso.sh"
 
@@ -42,9 +53,7 @@ iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
 [[ -z "$iso_uuid" ]] && die "Could not determine ISO UUID"
 
 # Allocate static SPICE port
-port_file="$VMS_ROOT/env/next_spice_port"
-spice_port=$(cat "$port_file" 2>/dev/null || echo 5900)
-echo $((spice_port + 1)) > "$port_file"
+spice_port=$(allocate_spice_port)
 
 info "Creating VM $name profile $profile (SPICE port $spice_port)"
 
@@ -149,4 +158,5 @@ step "Starting VM" virsh start "$name"
 
 step "Waiting for boot" wait_for_boot "$name"
 
+trap - EXIT
 info "VM $name ready"

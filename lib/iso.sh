@@ -11,7 +11,7 @@ kernel_dir="$VMS_ISO/arch-boot"
 iso_url="https://geo.mirror.pkgbuild.com/iso/latest/archlinux-x86_64.iso"
 
 download_iso() {
-    sudo curl -sL -o "$VMS_ARCH_ISO" "$iso_url" &
+    sudo curl -fsL -o "$VMS_ARCH_ISO" "$iso_url" &
     local pid=$!
     while kill -0 "$pid" 2>/dev/null; do
         printf "." >&3

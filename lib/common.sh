@@ -26,6 +26,21 @@ EOF
 
 VMS_VERBOSE=${VMS_VERBOSE:-0}
 
+validate_name() {
+    [[ "$1" =~ ^[a-zA-Z0-9_-]+$ ]] || die "Invalid VM name '$1': use only letters, numbers, hyphens, underscores"
+}
+
+allocate_spice_port() {
+    local port_file="$VMS_ROOT/env/next_spice_port"
+    (
+        flock -x 9
+        local port
+        port=$(cat "$port_file" 2>/dev/null || echo 5900)
+        echo $((port + 1)) > "$port_file"
+        echo "$port"
+    ) 9>"$port_file.lock"
+}
+
 die() {
     echo "error: $1" >&2
     exit 1

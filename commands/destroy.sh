@@ -2,6 +2,7 @@
 
 name="${1:-}"
 [[ -z "$name" ]] && die "usage: vms destroy <name>"
+validate_name "$name"
 
 disk="$VMS_IMAGES/$name.qcow2"
 pkg_dir="$VMS_FILESYSTEMS/pkg/$name"

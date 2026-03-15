@@ -35,6 +35,12 @@ Describe "vms clone"
   virt-clone() { return 0; }
   sudo() { "$@"; }
 
+  It "rejects invalid VM name"
+    When run source commands/clone.sh "src" "bad name"
+    The status should eq 1
+    The stderr should include "Invalid VM name"
+  End
+
   It "fails without arguments"
     When run source commands/clone.sh
     The status should eq 1

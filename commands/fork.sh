@@ -4,6 +4,7 @@ source="${1:-}"
 name="${2:-}"
 
 [[ -z "$source" || -z "$name" ]] && die "usage: vms fork <source> <name>"
+validate_name "$name"
 
 source_disk="$VMS_IMAGES/$source.qcow2"
 disk="$VMS_IMAGES/$name.qcow2"
@@ -27,10 +28,18 @@ if [[ -f "$disk" ]]; then
     die "Disk '$disk' already exists"
 fi
 
+# Cleanup on failure
+cleanup_on_failure() {
+    virsh destroy "$name" 2>/dev/null || true
+    virsh undefine "$name" --nvram 2>/dev/null || true
+    rm -f "$disk"
+    sudo rm -rf "$pkg_dir"
+    rm -f "$VMS_ROOT/env/vv/$name.vv"
+}
+trap cleanup_on_failure EXIT
+
 # Allocate static SPICE port
-port_file="$VMS_ROOT/env/next_spice_port"
-spice_port=$(cat "$port_file" 2>/dev/null || echo 5900)
-echo $((spice_port + 1)) > "$port_file"
+spice_port=$(allocate_spice_port)
 
 info "Forking '$source' to '$name' (SPICE port $spice_port)"
 
@@ -61,4 +70,5 @@ step "Setting SPICE port $spice_port" set_spice_port
 mkdir -p "$VMS_ROOT/env/vv"
 sed "s/{{PORT}}/$spice_port/" "$VMS_ROOT/templates/viewer.vv" > "$VMS_ROOT/env/vv/$name.vv"
 
+trap - EXIT
 info "VM '$name' ready"

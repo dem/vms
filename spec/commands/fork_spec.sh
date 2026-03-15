@@ -36,6 +36,12 @@ Describe "vms fork"
   sudo() { "$@"; }
   qemu-img() { touch "$4"; return 0; }
 
+  It "rejects invalid VM name"
+    When run source commands/fork.sh "src" "bad name"
+    The status should eq 1
+    The stderr should include "Invalid VM name"
+  End
+
   It "fails without arguments"
     When run source commands/fork.sh
     The status should eq 1

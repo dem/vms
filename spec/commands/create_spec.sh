@@ -71,6 +71,14 @@ STUB
   qemu-img() { return 0; }
   sudo() { "$@"; }
 
+  Describe "name validation"
+    It "rejects invalid VM name"
+      When run source commands/create.sh "bad name"
+      The status should eq 1
+      The stderr should include "Invalid VM name"
+    End
+  End
+
   Describe "SPICE port allocation"
     It "defaults to port 5900 when no port file exists"
       When run source commands/create.sh "testvm"
