@@ -86,13 +86,9 @@ step "Defining VM and booting ISO" \
     --serial pty \
     --noautoconsole
 
-# Set static SPICE port (virt-install doesn't support autoport=no, so redefine via XML)
-set_spice_port() {
-    virsh dumpxml "$name" | \
-        sed "s/<graphics type='spice'[^>]*/<graphics type='spice' port='$spice_port' autoport='no' listen='127.0.0.1'/" | \
-        virsh define /dev/stdin
-}
-step "Setting SPICE port $spice_port" set_spice_port
+# Set static SPICE port (virt-install doesn't support autoport=no, so edit after define)
+step "Setting SPICE port $spice_port" \
+    virt-xml "$name" --edit --graphics port="$spice_port"
 
 # Generate viewer config
 mkdir -p "$VMS_ROOT/env/vv"

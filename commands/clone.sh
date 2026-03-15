@@ -59,12 +59,8 @@ step "Cloning VM definition" \
     --file "$disk"
 
 # Set static SPICE port
-set_spice_port() {
-    virsh dumpxml "$name" | \
-        sed "s/<graphics type='spice'[^>]*/<graphics type='spice' port='$spice_port' autoport='no' listen='127.0.0.1'/" | \
-        virsh define /dev/stdin
-}
-step "Setting SPICE port $spice_port" set_spice_port
+step "Setting SPICE port $spice_port" \
+    virt-xml "$name" --edit --graphics port="$spice_port"
 
 # Create viewer config
 mkdir -p "$VMS_ROOT/env/vv"

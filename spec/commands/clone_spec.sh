@@ -33,6 +33,7 @@ Describe "vms clone"
   }
 
   virt-clone() { return 0; }
+  virt-xml() { return 0; }
   sudo() { "$@"; }
 
   It "rejects invalid VM name"

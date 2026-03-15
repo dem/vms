@@ -33,6 +33,7 @@ Describe "vms fork"
   }
 
   virt-clone() { return 0; }
+  virt-xml() { return 0; }
   sudo() { "$@"; }
   qemu-img() { touch "$4"; return 0; }
 
