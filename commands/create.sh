@@ -146,8 +146,7 @@ step "Stopping VM" stop_vm "$name"
 
 reconfigure_boot() {
     virt-xml "$name" --remove-device --disk device=cdrom
-    virsh dumpxml "$name" | sed '/<kernel>/d; /<initrd>/d; /<cmdline>/d' | virsh define /dev/stdin
-    virt-xml "$name" --edit --boot hd
+    virt-xml "$name" --edit --boot kernel=,initrd=,cmdline=,hd
 }
 step "Switching to disk boot" reconfigure_boot
 
