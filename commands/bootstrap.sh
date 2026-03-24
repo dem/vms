@@ -73,7 +73,7 @@ if [[ ! -f "$root_passwd" ]]; then
     read -s root_pass
     echo
     [[ -z "$root_pass" ]] && die "root password required"
-    echo "$root_pass" | openssl passwd -6 -stdin > "$root_passwd"
+    printf '%s' "$root_pass" | openssl passwd -6 -stdin > "$root_passwd"
     chmod 600 "$root_passwd"
     info "env/root_passwd created"
 fi
@@ -83,7 +83,7 @@ if [[ ! -f "$user_passwd" ]]; then
     read -s user_pass
     echo
     [[ -z "$user_pass" ]] && die "user password required"
-    echo "$user_pass" | openssl passwd -6 -stdin > "$user_passwd"
+    printf '%s' "$user_pass" | openssl passwd -6 -stdin > "$user_passwd"
     chmod 600 "$user_passwd"
     info "env/user_passwd created"
 fi
