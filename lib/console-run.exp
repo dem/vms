@@ -11,7 +11,7 @@ set marker_fail [lindex $argv 3]
 
 connect_console $vm_name
 
-send "$command && echo '$marker_done' || echo '$marker_fail'\r"
+send "$command && echo ok && echo '$marker_done' || echo fail && echo '$marker_fail'\r"
 
 wait_for_marker $marker_done $marker_fail
 disconnect
