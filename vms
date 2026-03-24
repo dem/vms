@@ -10,6 +10,16 @@ source "$VMS_ROOT/lib/common.sh"
 cmd="${1:-help}"
 shift || true
 
+# Global options
+args=()
+for arg in "$@"; do
+    case "$arg" in
+        -v|--verbose) VMS_VERBOSE=1 ;;
+        *) args+=("$arg") ;;
+    esac
+done
+set -- "${args[@]+"${args[@]}"}"
+
 case "$cmd" in
     bootstrap) source "$VMS_ROOT/commands/bootstrap.sh" "$@" ;;
     create)    source "$VMS_ROOT/commands/create.sh" "$@" ;;

@@ -8,7 +8,6 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --profile) profile="$2"; shift 2 ;;
         --noautologin) noautologin=1; shift ;;
-        -v|--verbose) VMS_VERBOSE=1; shift ;;
         -*) die "unknown option: $1" ;;
         *) name="$1"; shift ;;
     esac
