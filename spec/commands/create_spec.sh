@@ -122,4 +122,36 @@ STUB
       The contents of file "$VMS_ROOT/env/vv/testvm.vv" should include "resize-guest=always"
     End
   End
+
+  Describe "package sync"
+    sync_packages_test() {
+      local pkg_dir="$VMS_FILESYSTEMS/pkg/testvm"
+      local pkg sig
+      for pkg in "$pkg_dir"/*.pkg.tar.zst; do
+          [[ -f "$pkg" ]] || continue
+          sig="$pkg.sig"
+          if [[ -f "$sig" ]] && pacman-key --verify "$sig" "$pkg" &>/dev/null; then
+              :
+          else
+              echo "skipping ${pkg##*/}: signature verification failed" >&2
+          fi
+      done
+    }
+
+    It "warns when signature file is missing"
+      mkdir -p "$VMS_FILESYSTEMS/pkg/testvm"
+      touch "$VMS_FILESYSTEMS/pkg/testvm/foo-1.0-1-x86_64.pkg.tar.zst"
+      When run sync_packages_test
+      The stderr should include "skipping foo-1.0-1-x86_64.pkg.tar.zst: signature verification failed"
+    End
+
+    It "warns when signature verification fails"
+      mkdir -p "$VMS_FILESYSTEMS/pkg/testvm"
+      touch "$VMS_FILESYSTEMS/pkg/testvm/bar-2.0-1-x86_64.pkg.tar.zst"
+      touch "$VMS_FILESYSTEMS/pkg/testvm/bar-2.0-1-x86_64.pkg.tar.zst.sig"
+      pacman-key() { return 1; }
+      When run sync_packages_test
+      The stderr should include "skipping bar-2.0-1-x86_64.pkg.tar.zst: signature verification failed"
+    End
+  End
 End

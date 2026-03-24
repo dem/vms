@@ -134,6 +134,8 @@ sync_packages() {
         sig="$pkg.sig"
         if [[ -f "$sig" ]] && sudo pacman-key --verify "$sig" "$pkg" &>/dev/null; then
             [[ -f "$VMS_PKG_CACHE/${pkg##*/}" ]] || sudo mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
+        else
+            echo "skipping ${pkg##*/}: signature verification failed" >&2
         fi
     done
     [[ -d "$pkg_dir" ]] && sudo rm -f "$pkg_dir"/*
