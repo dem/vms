@@ -5,11 +5,22 @@ Describe "vms fork"
     VMS_ROOT=$(mktemp -d)
     VMS_IMAGES=$(mktemp -d)
     VMS_FILESYSTEMS=$(mktemp -d)
-    mkdir -p "$VMS_ROOT/env/vv" "$VMS_ROOT/templates"
+    mkdir -p "$VMS_ROOT/env/vv" "$VMS_ROOT/templates" "$VMS_ROOT/lib"
     cp templates/viewer.vv "$VMS_ROOT/templates/viewer.vv"
 
     # Create source disk
     echo "diskdata" > "$VMS_IMAGES/src.qcow2"
+
+    # Stub lib/vm.sh and lib/console.sh
+    cat > "$VMS_ROOT/lib/vm.sh" <<'STUB'
+wait_for_boot() { return 0; }
+stop_vm() { return 0; }
+STUB
+    cat > "$VMS_ROOT/lib/console.sh" <<'STUB'
+#!/bin/bash
+exit 0
+STUB
+    chmod +x "$VMS_ROOT/lib/console.sh"
   }
 
   cleanup() {
@@ -25,17 +36,15 @@ Describe "vms fork"
         [[ "$2" == "src" ]] && return 0
         return 1
         ;;
-      dumpxml)
-        echo "<domain><graphics type='spice' autoport='yes' listen='127.0.0.1'/></domain>"
-        ;;
-      define) cat >/dev/null; return 0 ;;
+      start) return 0 ;;
+      *) return 0 ;;
     esac
   }
 
   virt-clone() { return 0; }
   virt-xml() { return 0; }
   sudo() { "$@"; }
-  qemu-img() { touch "$4"; return 0; }
+  qemu-img() { touch "${@: -1}"; return 0; }
 
   It "rejects invalid VM name"
     When run source commands/fork.sh "src" "bad name"
@@ -75,15 +84,24 @@ Describe "vms fork"
   It "creates a linked clone with backing file"
     When run source commands/fork.sh "src" "newvm"
     The status should eq 0
-    The output should include "Forking 'src' to 'newvm'"
-    The output should include "Creating disk (backing file)"
+    The output should include "Forking src to newvm"
+    The output should include "Creating linked disk"
+  End
+
+  It "shows verbose output with -v"
+    VMS_VERBOSE=1
+    When run source commands/fork.sh "src" "newvm"
+    The status should eq 0
+    The output should include "==> Forking src to newvm"
+    The output should include "==> Creating linked disk"
+    The output should include "==> VM newvm ready"
   End
 
   It "allocates port and creates .vv file"
     echo 5920 > "$VMS_ROOT/env/next_spice_port"
     When run source commands/fork.sh "src" "newvm"
     The status should eq 0
-    The output should include "VM 'newvm' ready"
+    The output should include "VM newvm ready"
     The contents of file "$VMS_ROOT/env/next_spice_port" should eq 5921
     The file "$VMS_ROOT/env/vv/newvm.vv" should be file
     The contents of file "$VMS_ROOT/env/vv/newvm.vv" should include "port=5920"

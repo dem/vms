@@ -12,20 +12,20 @@ pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
 
 # Check source exists
 if ! virsh dominfo "$source" &>/dev/null; then
-    die "Source VM '$source' does not exist"
+    die "Source VM $source does not exist"
 fi
 
 if [[ ! -f "$source_disk" ]]; then
-    die "Source disk '$source_disk' not found"
+    die "Source disk $source_disk not found"
 fi
 
 # Check target doesn't exist
 if virsh dominfo "$name" &>/dev/null; then
-    die "VM '$name' already exists"
+    die "VM $name already exists"
 fi
 
 if [[ -f "$disk" ]]; then
-    die "Disk '$disk' already exists"
+    die "Disk $disk already exists"
 fi
 
 # Cleanup on failure
@@ -41,13 +41,13 @@ trap cleanup_on_failure EXIT
 # Allocate static SPICE port
 spice_port=$(allocate_spice_port)
 
-info "Forking '$source' to '$name' (SPICE port $spice_port)"
+info "Forking $source to $name"
 
 # Create package cache directory
 sudo mkdir -p "$pkg_dir"
 
 # Create CoW clone using backing file
-step "Creating disk (backing file)" \
+step "Creating linked disk" \
     qemu-img create -f qcow2 -b "$source_disk" -F qcow2 "$disk"
 
 # Clone VM definition
@@ -66,5 +66,19 @@ step "Setting SPICE port $spice_port" \
 mkdir -p "$VMS_ROOT/env/vv"
 sed "s/{{PORT}}/$spice_port/" "$VMS_ROOT/templates/viewer.vv" > "$VMS_ROOT/env/vv/$name.vv"
 
+# Set hostname inside the VM
+source "$VMS_ROOT/lib/vm.sh"
+
+step "Starting VM" virsh start "$name"
+step "Waiting for boot" wait_for_boot "$name"
+
+set_hostname() {
+    "$VMS_ROOT/lib/console.sh" run "$name" \
+        "echo '$name' > /etc/hostname && sed -i 's/127\\.0\\.1\\.1.*/127.0.1.1   $name.localdomain $name/' /etc/hosts"
+}
+step "Setting hostname" set_hostname
+
+step "Stopping VM" stop_vm "$name"
+
 trap - EXIT
-info "VM '$name' ready"
+info "VM $name ready"
