@@ -61,12 +61,12 @@ mkdir -p /mnt/var/cache/pacman/pkg-host
 mkdir -p /mnt/var/cache/pacman/pkg
 
 # Try to mount virtiofs shares
-mount -t virtiofs pkg-host /mnt/var/cache/pacman/pkg-host 2>/dev/null || true
-mount -t virtiofs pkg /mnt/var/cache/pacman/pkg 2>/dev/null || true
+mount -t virtiofs pkg-host /mnt/var/cache/pacman/pkg-host 2>/dev/null || echo "pkg-host virtiofs not available, packages will be downloaded" >&2
+mount -t virtiofs pkg /mnt/var/cache/pacman/pkg 2>/dev/null || echo "pkg virtiofs not available, packages will be downloaded" >&2
 
 # Mount guest scripts into target for chroot access
 mkdir -p /mnt/vms
-mount -t virtiofs vms /mnt/vms 2>/dev/null || true
+mount -t virtiofs vms /mnt/vms || { echo "vms virtiofs mount failed" >&2; exit 1; }
 
 # 4. Install base system
 echo "=== Installing packages ==="
