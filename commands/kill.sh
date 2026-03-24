@@ -5,8 +5,8 @@ name="${1:-}"
 validate_name "$name"
 
 if ! virsh dominfo "$name" &>/dev/null; then
-    die "VM '$name' does not exist"
+    die "VM $name does not exist"
 fi
 
-info "Force stopping VM '$name'"
+info "Force stopping VM $name"
 virsh destroy "$name" 2>/dev/null || true

@@ -9,12 +9,12 @@ pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
 
 if ! virsh dominfo "$name" &>/dev/null; then
     if [[ -f "$disk" ]]; then
-        die "VM '$name' does not exist, but disk remains. Run: rm $disk"
+        die "VM $name does not exist, but disk remains. Run: rm $disk"
     fi
-    die "VM '$name' does not exist"
+    die "VM $name does not exist"
 fi
 
-info "Destroying VM '$name'"
+info "Destroying VM $name"
 
 # Stop if running
 virsh destroy "$name" 2>/dev/null || true
@@ -45,4 +45,4 @@ if [[ -f "$vv_file" ]]; then
     rm -f "$vv_file"
 fi
 
-info "VM '$name' destroyed"
+info "VM $name destroyed"

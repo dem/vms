@@ -54,7 +54,7 @@ iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
 # Allocate static SPICE port
 spice_port=$(allocate_spice_port)
 
-info "Creating VM $name profile $profile (SPICE port $spice_port)"
+info "Creating VM $name profile $profile"
 
 # Create VM-specific package cache directory
 step "Creating package cache directory" \
