@@ -54,7 +54,7 @@ iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
 # Allocate static SPICE port
 spice_port=$(allocate_spice_port)
 
-info "Creating VM $name profile $profile"
+info "Creating VM $name"
 
 # Create VM-specific package cache directory
 step "Creating package cache directory" \
@@ -153,6 +153,11 @@ step "Switching to disk boot" reconfigure_boot
 step "Starting VM" virsh start "$name"
 
 step "Waiting for boot" wait_for_boot "$name"
+
+if [[ -n "$profile" ]]; then
+    info "Applying profile $profile"
+    # TODO: apply profile via console
+fi
 
 trap - EXIT
 info "VM $name ready"

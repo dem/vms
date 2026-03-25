@@ -16,10 +16,9 @@ Commands:
     destroy <vm>        Remove VM and storage
 
 Options:
-    --profile <name>    Profile for create (default: gui)
+    --profile <name>    Profile for create
     --noautologin       Skip autologin setup on create
     -v, --verbose       Show full command output
-    --help              Show this help
 EOF
     exit 1
 }
