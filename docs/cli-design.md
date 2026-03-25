@@ -44,15 +44,24 @@ All commands accept `-v` / `--verbose` for detailed output.
 
 ## Profiles
 
-Profiles define what gets installed and what app runs on login.
+Profiles add packages and configuration on top of the base system. No profile = base system only.
 
-| Profile   | Base | Desktop | Default App | Use Case            |
-|-----------|------|---------|-------------|---------------------|
-| `minimal` | base | none    | shell       | Headless, servers   |
-| `gui`     | base | i3+X11  | none        | General GUI work    |
-| `browser` | base | i3+X11  | chromium    | Web browsing        |
-| `telegram`| base | i3+X11  | telegram    | Messaging           |
-| `dev`     | base | i3+X11  | terminal    | Development env     |
+| Profile   | Desktop | Default App | Use Case            |
+|-----------|---------|-------------|---------------------|
+| `gui`     | i3+X11  | none        | General GUI work    |
+| `browser` | i3+X11  | chromium    | Web browsing        |
+| `telegram`| i3+X11  | telegram    | Messaging           |
+| `dev`     | i3+X11  | terminal    | Development env     |
+
+Profiles are hierarchical — each script calls its dependency if needed:
+
+```
+base (no profile)
+└── gui (i3, X11, spice-vdagent)
+    ├── browser (gui + chromium)
+    ├── telegram (gui + telegram)
+    └── dev (gui + terminal + dev tools)
+```
 
 ## Script Structure
 
