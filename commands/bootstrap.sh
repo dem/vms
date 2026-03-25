@@ -21,10 +21,12 @@ fi
 
 setup_network() {
     # Find a free 192.168.x.0/24 subnet (avoid conflicts with host networks)
-    used_subnets=$(ip -4 addr show | grep -oP '192\.168\.\K[0-9]+' | sort -u)
+    # Start at 122 (libvirt's default) to stay in the upper range away from common home/office subnets
+    local used_subnets
+    used_subnets=" $(ip -4 addr show | grep -oP '192\.168\.\K[0-9]+' | sort -u | tr '\n' ' ')"
     libvirt_subnet=""
     for i in $(seq 122 254); do
-        if ! echo "$used_subnets" | grep -qx "$i"; then
+        if [[ "$used_subnets" != *" $i "* ]]; then
             libvirt_subnet="$i"
             break
         fi

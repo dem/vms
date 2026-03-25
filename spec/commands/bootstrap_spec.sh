@@ -104,6 +104,35 @@ STUB
     The output should not include "created"
   End
 
+  Describe "subnet allocation"
+    find_subnet() {
+      local used_subnets
+      used_subnets=" $(echo "$1" | tr '\n' ' ')"
+      for i in $(seq 122 254); do
+          if [[ "$used_subnets" != *" $i "* ]]; then
+              echo "$i"
+              return
+          fi
+      done
+      echo ""
+    }
+
+    It "picks 122 when no subnets are used"
+      When call find_subnet ""
+      The output should eq 122
+    End
+
+    It "skips used subnets"
+      When call find_subnet "122 123"
+      The output should eq 124
+    End
+
+    It "handles non-contiguous used subnets"
+      When call find_subnet "122 125"
+      The output should eq 123
+    End
+  End
+
   It "creates uid and gid files"
     mkdir -p "$VMS_ROOT/env"
     echo "hash" > "$VMS_ROOT/env/root_passwd"
