@@ -20,13 +20,18 @@ cd vms
 ./vms viewer work     # SPICE UI with app running
 ```
 
+## VM Names
+
+Names must match `[a-zA-Z0-9._-]+` — letters, numbers, hyphens, underscores, dots.
+
 ## Commands
 
 | Command                         | Description                                   |
 |---------------------------------|-----------------------------------------------|
 | `vms bootstrap`                 | Install host dependencies (libvirt, qemu)     |
 | `vms create <name> [--profile]` | Create new VM from scratch                    |
-| `vms clone <source> <name>`     | Clone existing VM (qcow2 backing file)        |
+| `vms clone <source> <name>`     | Full copy of existing VM                      |
+| `vms fork <source> <name>`      | Linked copy of existing VM (CoW backing file) |
 | `vms start <name>`              | Start VM                                      |
 | `vms stop <name>`               | Stop VM (graceful shutdown)                   |
 | `vms kill <name>`               | Force stop VM                                 |
@@ -34,6 +39,8 @@ cd vms
 | `vms viewer <name>`             | Open SPICE viewer (GUI with app)              |
 | `vms list`                      | List all VMs with status                      |
 | `vms destroy <name>`            | Remove VM and its storage                     |
+
+All commands accept `-v` / `--verbose` for detailed output.
 
 ## Profiles
 
