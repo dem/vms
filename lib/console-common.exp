@@ -1,7 +1,7 @@
 #!/usr/bin/expect -f
 # Common procedures for console interaction
 
-set timeout 900
+set timeout [expr {[info exists env(VMS_EXPECT_TIMEOUT)] ? $env(VMS_EXPECT_TIMEOUT) : 300}]
 
 proc connect_console {vm_name} {
     global spawn_id
