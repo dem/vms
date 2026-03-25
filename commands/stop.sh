@@ -13,5 +13,4 @@ if [[ "$state" != "running" ]]; then
     die "VM $name is not running"
 fi
 
-info "Stopping VM $name"
-virsh shutdown "$name"
+step "Stopping VM $name" virsh shutdown "$name"

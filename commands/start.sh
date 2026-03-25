@@ -13,5 +13,4 @@ if [[ "$state" == "running" ]]; then
     die "VM $name is already running"
 fi
 
-info "Starting VM $name"
-virsh start "$name"
+step "Starting VM $name" virsh start "$name"

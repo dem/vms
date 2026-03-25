@@ -46,6 +46,6 @@ Describe "vms start"
     _vm_state="shut off"
     When run source commands/start.sh "myvm"
     The status should eq 0
-    The output should include "started myvm"
+    The output should include "Starting VM myvm"
   End
 End

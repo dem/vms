@@ -46,6 +46,6 @@ Describe "vms stop"
     _vm_state="running"
     When run source commands/stop.sh "myvm"
     The status should eq 0
-    The output should include "shutdown myvm"
+    The output should include "Stopping VM myvm"
   End
 End
