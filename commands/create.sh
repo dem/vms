@@ -155,8 +155,17 @@ step "Starting VM" virsh start "$name"
 step "Waiting for boot" wait_for_boot "$name"
 
 if [[ -n "$profile" ]]; then
-    info "Applying profile $profile"
-    # TODO: apply profile via console
+    profile_script="$VMS_ROOT/guest/profiles/$profile.sh"
+    [[ -f "$profile_script" ]] || die "Profile $profile not found"
+
+    apply_profile() {
+        "$VMS_ROOT/lib/console.sh" run "$name" "/vms/profiles/$profile.sh '$vm_user'"
+    }
+    step "Applying profile $profile" apply_profile
+
+    step "Restarting VM" stop_vm "$name"
+    step "Starting VM" virsh start "$name"
+    step "Waiting for boot" wait_for_boot "$name"
 fi
 
 trap - EXIT

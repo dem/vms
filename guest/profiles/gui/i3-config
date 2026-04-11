@@ -1,0 +1,42 @@
+# i3 config for VM guest
+
+exec --no-startup-id /usr/bin/spice-vdagent
+exec --no-startup-id ~/.config/i3/spice-autoresize.sh
+exec --no-startup-id alacritty
+
+font pango:DejaVu Sans Mono 10
+
+set $mod Mod4
+
+bindsym $mod+Return exec alacritty
+bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
+
+bindsym $mod+Shift+q kill
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+e exit
+
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+
+bindsym $mod+1 workspace 1
+bindsym $mod+2 workspace 2
+bindsym $mod+3 workspace 3
+
+bindsym $mod+Shift+1 move container to workspace 1
+bindsym $mod+Shift+2 move container to workspace 2
+bindsym $mod+Shift+3 move container to workspace 3
+
+bindsym $mod+f fullscreen toggle
+bindsym $mod+v split v
+bindsym $mod+b split h
+
+bar {
+    mode invisible
+}

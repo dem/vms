@@ -11,7 +11,7 @@ Describe "vms create"
     VMS_DEFAULT_MEMORY=2048
     VMS_DEFAULT_CPUS=2
     VMS_DEFAULT_DISK=20G
-    VMS_DEFAULT_PROFILE=gui
+    VMS_DEFAULT_PROFILE=""
 
     # Create required dirs and files
     mkdir -p "$VMS_ROOT/env/vv" "$VMS_ROOT/templates" "$VMS_ROOT/guest"

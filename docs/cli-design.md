@@ -63,6 +63,18 @@ base (no profile)
     └── dev (gui + terminal + dev tools)
 ```
 
+### Profile layout
+
+Each profile is a shell script under `guest/profiles/<name>.sh` containing the
+install logic (packages, ownership, etc.). When a profile needs config files or
+other assets, they go in a sibling directory `guest/profiles/<name>/` — any
+layout is fine, the script just references them via `/vms/profiles/<name>/...`
+(the `guest/` tree is mounted read-only inside the VM at `/vms`).
+
+Convention for asset filenames:
+- plain name = drop-in file (e.g. `i3-config`, `xinitrc`)
+- `.append` suffix = appended to the target instead of overwriting (e.g. `bash_profile.append`)
+
 ## Script Structure
 
 ```
@@ -84,8 +96,12 @@ vms                     # Main entry point (bash)
 ├── guest/                  # scripts that run inside VM
 │   ├── install.sh
 │   └── profiles/
-│       ├── minimal.sh
-│       ├── gui.sh
+│       ├── gui.sh          # logic: install pkgs, drop assets in place
+│       ├── gui/            # sibling dir with config files, templates, etc.
+│       │   ├── i3-config
+│       │   ├── spice-autoresize.sh
+│       │   ├── xinitrc
+│       │   └── bash_profile.append
 │       ├── browser.sh
 │       ├── telegram.sh
 │       └── dev.sh
