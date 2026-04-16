@@ -51,7 +51,7 @@ Profiles add packages and configuration on top of the base system. No profile = 
 | `gui`     | i3+X11  | none        | General GUI work    |
 | `browser` | i3+X11  | chromium    | Web browsing        |
 | `telegram`| i3+X11  | telegram    | Messaging           |
-| `dev`     | i3+X11  | terminal    | Development env     |
+| `dev`     | i3+X11  | alacritty   | Development env     |
 
 Profiles are hierarchical — each script calls its dependency if needed:
 
@@ -60,7 +60,7 @@ base (no profile)
 └── gui (i3, X11, spice-vdagent)
     ├── browser (gui + chromium)
     ├── telegram (gui + telegram)
-    └── dev (gui + terminal + dev tools)
+    └── dev (gui + dev tools + claude code)
 ```
 
 ### Profile layout
@@ -74,6 +74,14 @@ layout is fine, the script just references them via `/vms/profiles/<name>/...`
 Convention for asset filenames:
 - plain name = drop-in file (e.g. `i3-config`, `xinitrc`)
 - `.append` suffix = appended to the target instead of overwriting (e.g. `bash_profile.append`)
+
+### dev profile packages
+
+Shell essentials: `bash-completion`, `man-db`, `man-pages`, `openssh`, `curl`, `wget`
+Editors: `vim`, `neovim`, `meld` (merge conflicts)
+Dev tools: `git`, `tmux`, `docker`, `base-devel`
+Modern CLI: `ripgrep`, `fd`, `jq`, `yq`, `miller`, `htop`, `tree`, `bat`, `git-delta`, `glow`
+AI: `claude code` (installed via official script)
 
 ## Script Structure
 
