@@ -39,8 +39,57 @@ Names must match `[a-zA-Z0-9._-]+` — letters, numbers, hyphens, underscores, d
 | `vms viewer <name>`             | Open SPICE viewer (GUI with app)              |
 | `vms list`                      | List all VMs with status                      |
 | `vms destroy <name>`            | Remove VM and its storage                     |
+| `vms mount <name> <host> <guest>` | Mount host directory into guest via virtiofs |
+| `vms umount <name> <guest>`    | Unmount a previously mounted directory        |
 
 All commands accept `-v` / `--verbose` for detailed output.
+
+## Shared mounts
+
+Mount host directories into a guest VM via virtiofs.
+
+```
+vms mount myvm ~/projects /home/user/projects
+vms mount myvm ~/data /mnt/data --readonly
+vms mount myvm ~/tmp /mnt/tmp --temp
+vms umount myvm /home/user/projects
+```
+
+### Modes
+
+| Mode | VM state | Survives reboot | How it works |
+|------|----------|-----------------|--------------|
+| persistent (default) | stopped | yes | add virtiofs to domain XML + fstab entry inside guest |
+| `--temp` | running | no | hotplug virtiofs to domain XML + mount inside guest |
+
+### Flags
+
+- `--readonly` — mount as read-only
+- `--temp` — temporary mount on a running VM, lost on reboot
+- `--force` — proceed even if guest directory contains files (see shadow warning)
+
+### Tag naming
+
+Each virtiofs share needs an internal tag linking the host XML entry to the guest
+mount. Tags are derived from the guest mountpoint: `/home/user/projects` →
+`home-user-projects`. On conflict, a numeric suffix is appended (`-1`, `-2`, etc.).
+
+### Shadow warning
+
+If the guest mountpoint already exists and contains files, the mount will shadow
+them (files still exist on disk but are hidden). `vms mount` refuses in this case
+and requires `--force` to proceed:
+
+```
+error: /home/user/projects exists and contains files — mount will shadow them
+use --force to proceed
+```
+
+### Unmount
+
+`vms umount` auto-detects whether the mount is persistent or temporary and
+reverses accordingly — removes fstab entry + XML device (persistent) or
+unmounts + detaches (temporary).
 
 ## Profiles
 

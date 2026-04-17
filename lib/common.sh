@@ -3,22 +3,31 @@ usage() {
 Usage: vms <command> [args]
 
 Commands:
-    bootstrap           Install host dependencies
-    create <vm>         Create new VM
-    clone <src> <vm>    Full copy VM
-    fork <src> <vm>     Linked copy VM
-    start <vm>          Start VM
-    stop <vm>           Graceful stop VM
-    kill <vm>           Force stop VM
-    console <vm>        Serial console (root)
-    viewer <vm>         GUI viewer (user)
-    list                List all VMs
-    destroy <vm>        Remove VM and storage
+    bootstrap                 Install host dependencies
+    create <vm>               Create new VM
+    clone <src> <vm>          Full copy VM
+    fork <src> <vm>           Linked copy VM
+    start <vm>                Start VM
+    stop <vm>                 Graceful stop VM
+    kill <vm>                 Force stop VM
+    console <vm>              Serial console (root)
+    viewer <vm>               GUI viewer (user)
+    list                      List all VMs
+    destroy <vm>              Remove VM and storage
+    mount <vm> <from> <to>    Share host directory into guest
+    umount <vm> <to>          Unmount shared directory
 
-Options:
-    --profile <name>    Profile for create
-    --noautologin       Skip autologin setup on create
-    -v, --verbose       Show full command output
+Create options:
+    --profile <name>          Install profile on top of base system
+    --noautologin             Skip autologin setup
+
+Mount options:
+    --readonly                Mount as read-only
+    --temp                    Temporary mount on running VM, lost on reboot
+    --force                   Mount even if guest directory is non-empty
+
+Global options:
+    -v, --verbose             Show full command output
 EOF
     exit 1
 }

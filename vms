@@ -32,6 +32,8 @@ case "$cmd" in
     v|viewer)  source "$VMS_ROOT/commands/viewer.sh" "$@" ;;
     l|list)    source "$VMS_ROOT/commands/list.sh" "$@" ;;
     destroy)   source "$VMS_ROOT/commands/destroy.sh" "$@" ;;
+    mount)     source "$VMS_ROOT/commands/mount.sh" "$@" ;;
+    umount)    source "$VMS_ROOT/commands/umount.sh" "$@" ;;
     help|--help|-h) usage ;;
     *) die "unknown command: $cmd" ;;
 esac
