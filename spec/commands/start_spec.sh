@@ -10,12 +10,27 @@ Describe "vms start"
       domstate)
         echo "${_vm_state:-shut off}"
         ;;
-      start)
-        echo "started $2"
+      start|resume|destroy)
+        echo "$1 $2"
         return 0
         ;;
     esac
   }
+
+  setup() {
+    VMS_ROOT=$(mktemp -d)
+    mkdir -p "$VMS_ROOT/lib"
+    cat > "$VMS_ROOT/lib/vm.sh" <<'STUB'
+stop_vm() { return 0; }
+STUB
+  }
+
+  cleanup() {
+    rm -rf "$VMS_ROOT"
+  }
+
+  BeforeEach setup
+  AfterEach cleanup
 
   It "rejects invalid VM name"
     When run source commands/start.sh "bad name"
@@ -44,6 +59,27 @@ Describe "vms start"
 
   It "starts a stopped VM"
     _vm_state="shut off"
+    When run source commands/start.sh "myvm"
+    The status should eq 0
+    The output should include "Starting VM myvm"
+  End
+
+  It "resumes a paused VM"
+    _vm_state="paused"
+    When run source commands/start.sh "myvm"
+    The status should eq 0
+    The output should include "Resuming VM myvm"
+  End
+
+  It "recovers a crashed VM"
+    _vm_state="crashed"
+    When run source commands/start.sh "myvm"
+    The status should eq 0
+    The output should include "Starting VM myvm"
+  End
+
+  It "rejects in-shutdown VM after waiting fails"
+    _vm_state="in shutdown"
     When run source commands/start.sh "myvm"
     The status should eq 0
     The output should include "Starting VM myvm"
