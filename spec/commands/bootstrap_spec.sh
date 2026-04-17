@@ -146,4 +146,37 @@ STUB
     The file "$VMS_ROOT/env/gid" should be file
     The contents of file "$VMS_ROOT/env/gid" should eq 1000
   End
+
+  Describe "images/iso symlinks"
+    setup_env() {
+      mkdir -p "$VMS_ROOT/env"
+      echo "hash" > "$VMS_ROOT/env/root_passwd"
+      echo "hash" > "$VMS_ROOT/env/user_passwd"
+      echo "testuser" > "$VMS_ROOT/env/user"
+      echo "1000" > "$VMS_ROOT/env/uid"
+      echo "1000" > "$VMS_ROOT/env/gid"
+    }
+
+    It "creates images and iso symlinks pointing at libvirt dirs"
+      setup_env
+      When run source commands/bootstrap.sh
+      The status should eq 0
+      The output should include "Symlinking images"
+      The output should include "Symlinking iso"
+      The path "$VMS_ROOT/images" should be symlink
+      The path "$VMS_ROOT/iso" should be symlink
+      The path "$VMS_ROOT/images" should be exist
+      The path "$VMS_ROOT/iso" should be exist
+    End
+
+    It "skips symlink creation when already present"
+      setup_env
+      ln -s "$VMS_IMAGES" "$VMS_ROOT/images"
+      ln -s "$VMS_ISO" "$VMS_ROOT/iso"
+      When run source commands/bootstrap.sh
+      The status should eq 0
+      The output should not include "Symlinking images"
+      The output should not include "Symlinking iso"
+    End
+  End
 End

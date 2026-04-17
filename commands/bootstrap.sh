@@ -122,6 +122,14 @@ if [[ ! -L "$HOME/.local/bin/vms" ]]; then
     step "Symlinking vms to ~/.local/bin" install_symlink
 fi
 
+# Symlink images/iso into VMS_ROOT for easy access
+if [[ ! -e "$VMS_ROOT/images" ]]; then
+    step "Symlinking images" ln -s "$VMS_IMAGES" "$VMS_ROOT/images"
+fi
+if [[ ! -e "$VMS_ROOT/iso" ]]; then
+    step "Symlinking iso" ln -s "$VMS_ISO" "$VMS_ROOT/iso"
+fi
+
 # Set LIBVIRT_DEFAULT_URI in ~/.bashrc
 setup_libvirt_uri() {
     echo 'export LIBVIRT_DEFAULT_URI=qemu:///system' >> "$HOME/.bashrc"
