@@ -149,6 +149,10 @@ EOF
 # Network
 systemctl enable NetworkManager
 
+# Weekly fstrim to release unused blocks back to the host qcow2
+# (requires discard=unmap on the disk, set in create.sh).
+systemctl enable fstrim.timer
+
 # Pacman cache
 sed -i '/^\[options\]/a CacheDir = /var/cache/pacman/pkg/\nCacheDir = /var/cache/pacman/pkg-host/' /etc/pacman.conf
 

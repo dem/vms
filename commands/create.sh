@@ -76,7 +76,7 @@ step "Defining VM and booting ISO" \
     --memory "$VMS_DEFAULT_MEMORY" \
     --memorybacking source.type=memfd,access.mode=shared \
     --vcpus "$VMS_DEFAULT_CPUS" \
-    --disk "path=$disk,format=qcow2,bus=virtio" \
+    --disk "path=$disk,format=qcow2,bus=virtio,discard=unmap" \
     --cdrom "$VMS_ARCH_ISO" \
     --boot "uefi,kernel=$kernel,initrd=$initrd,kernel_args=archisobasedir=arch archisosearchuuid=$iso_uuid console=tty0 console=ttyS0,115200n8" \
     --network network=default,model=virtio \
