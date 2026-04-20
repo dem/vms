@@ -1,19 +1,23 @@
-# vms create <name> [--profile <profile>] [--noautologin]
+# vms create <name> [profile] [--noautologin]
 
 name=""
 profile="$VMS_DEFAULT_PROFILE"
 noautologin=""
 
+positional=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --profile) profile="$2"; shift 2 ;;
         --noautologin) noautologin=1; shift ;;
         -*) die "unknown option: $1" ;;
-        *) name="$1"; shift ;;
+        *) positional+=("$1"); shift ;;
     esac
 done
 
-[[ -z "$name" ]] && die "usage: vms create <name> [--profile <profile>] [--noautologin]"
+name="${positional[0]:-}"
+[[ ${#positional[@]} -ge 2 ]] && profile="${positional[1]}"
+[[ ${#positional[@]} -gt 2 ]] && die "usage: vms create <name> [profile] [--noautologin]"
+
+[[ -z "$name" ]] && die "usage: vms create <name> [profile] [--noautologin]"
 validate_name "$name"
 
 disk="$VMS_IMAGES/$name.qcow2"

@@ -4,7 +4,8 @@ Usage: vms <command> [args]
 
 Commands:
     bootstrap                 Install host dependencies
-    create <vm>               Create new VM
+    create <vm> [profile]     Create new VM, optionally with profile
+    apply <vm> <profile>      Apply a profile to an existing VM
     clone <src> <vm>          Full copy VM
     fork <src> <vm>           Linked copy VM
     start <vm>                Start VM
@@ -18,7 +19,6 @@ Commands:
     umount <vm> <to>          Unmount shared directory
 
 Create options:
-    --profile <name>          Install profile on top of base system
     --noautologin             Skip autologin setup
 
 Mount options:

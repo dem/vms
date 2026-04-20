@@ -9,7 +9,14 @@ vm_user="${1:?username required}"
 vm_home="/home/$vm_user"
 [[ -d "$vm_home" ]] || { echo "Home directory $vm_home not found"; exit 1; }
 
-# Apply GUI base (i3/X11/spice-vdagent + alacritty auto-start)
+marker=/etc/vms-profiles/dev
+if [[ -f "$marker" ]]; then
+    echo "=== dev profile already applied, skipping ==="
+    exit 0
+fi
+
+# Apply GUI base (i3/X11/spice-vdagent + alacritty auto-start).
+# gui.sh is idempotent — it self-skips if already applied.
 bash /vms/profiles/gui.sh "$vm_user"
 
 echo "=== Installing dev packages ==="
@@ -31,5 +38,8 @@ cat >> "$vm_home/.bash_profile" <<'EOF'
 export PATH="$HOME/.local/bin:$PATH"
 EOF
 chown "$vm_user:$vm_user" "$vm_home/.bash_profile"
+
+mkdir -p /etc/vms-profiles
+touch "$marker"
 
 echo "=== Dev profile applied ==="

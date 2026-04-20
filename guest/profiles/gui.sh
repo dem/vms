@@ -10,6 +10,12 @@ vm_user="${1:?username required}"
 vm_home="/home/$vm_user"
 [[ -d "$vm_home" ]] || { echo "Home directory $vm_home not found"; exit 1; }
 
+marker=/etc/vms-profiles/gui
+if [[ -f "$marker" ]]; then
+    echo "=== gui profile already applied, skipping ==="
+    exit 0
+fi
+
 echo "=== Installing GUI packages ==="
 pacman -S --noconfirm --needed \
     xorg-server xorg-xinit xorg-xrandr xorg-xev \
@@ -24,5 +30,8 @@ install -Dm644 "$assets/xinitrc"             "$vm_home/.xinitrc"
 cat "$assets/bash_profile.append" >> "$vm_home/.bash_profile"
 
 chown -R "$vm_user:$vm_user" "$vm_home/.config" "$vm_home/.xinitrc" "$vm_home/.bash_profile"
+
+mkdir -p /etc/vms-profiles
+touch "$marker"
 
 echo "=== GUI profile applied ==="

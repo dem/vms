@@ -13,7 +13,7 @@ cd vms
 ./vms bootstrap
 
 # 3. Create a VM
-./vms create work --profile gui
+./vms create work gui
 
 # 4. Connect
 ./vms console work    # serial console as root
@@ -29,7 +29,8 @@ Names must match `[a-zA-Z0-9._-]+` — letters, numbers, hyphens, underscores, d
 | Command                         | Description                                   |
 |---------------------------------|-----------------------------------------------|
 | `vms bootstrap`                 | Install host dependencies (libvirt, qemu)     |
-| `vms create <name> [--profile]` | Create new VM from scratch                    |
+| `vms create <name> [profile]`   | Create new VM, optionally with profile        |
+| `vms apply <name> <profile>`    | Apply a profile to an existing VM             |
 | `vms clone <source> <name>`     | Full copy of existing VM                      |
 | `vms fork <source> <name>`      | Linked copy of existing VM (CoW backing file) |
 | `vms start <name>`              | Start VM                                      |
@@ -111,6 +112,54 @@ base (no profile)
     ├── telegram (gui + telegram)
     └── dev (gui + dev tools + claude code)
 ```
+
+### Applying profiles to an existing VM
+
+A profile can be applied either at creation time as the second positional
+argument, or afterwards via `vms apply <vm> <profile>`. The VM can be
+running or stopped:
+
+- **Running**: applies the profile, then restarts the VM to pick up session
+  changes (e.g. `.bash_profile` updates).
+- **Stopped**: starts the VM, applies the profile, stops it again. Final
+  state matches the initial state.
+
+```
+vms create myvm dev                 # installs gui + dev
+vms apply myvm telegram              # adds telegram on top; gui is skipped
+```
+
+### Idempotency and marker files
+
+Each profile script writes a marker file `/etc/vms-profiles/<name>` after
+successful application and checks for it at the top. If present, the script
+exits immediately. This makes profile chains safe to re-apply — when
+`telegram.sh` delegates to `gui.sh`, `gui.sh` self-skips if already applied,
+so only the telegram-specific steps run.
+
+### Autostart ownership
+
+`gui` sets alacritty as the i3 autostart app. A profile applied on top of
+`gui` may want to replace it with its own app (e.g. telegram wants Telegram
+to auto-start). The rule:
+
+> The first non-gui profile applied claims the autostart slot. Subsequent
+> profiles leave it alone.
+
+Detection uses the same marker files: when a profile runs, it checks
+`/etc/vms-profiles/` for any non-gui, non-self marker. If none → it's the
+first → claim the slot. If another marker exists → another profile got here
+first → skip.
+
+| Scenario | Autostart |
+|----------|-----------|
+| `vms create foo gui` | alacritty |
+| `vms create foo telegram` | Telegram (claims slot) |
+| `vms create foo dev` | alacritty (dev's "relevant app" happens to be alacritty) |
+| `vms create foo dev` → `vms apply foo telegram` | alacritty (dev already claimed) |
+| `vms create foo telegram` → `vms apply foo dev` | Telegram (telegram already claimed) |
+
+Users can always edit `~/.config/i3/config` manually to change the autostart.
 
 ### Profile layout
 
@@ -219,7 +268,7 @@ sudo mkdir -p /var/lib/libvirt/{images,iso,filesystems/pkg/shared}
 ## Create Flow
 
 ```
-vms create work --profile browser
+vms create work browser
     │
     ├── 1. Generate VM name and paths
     ├── 2. Create qcow2 disk image
@@ -274,7 +323,7 @@ Installing packages... done
 Enabling libvirtd... done
 Bootstrap complete.
 
-$ ./vms create work --profile dev
+$ ./vms create work dev
 Creating disk... done
 Installing Arch... done
 Applying profile 'dev'... done
