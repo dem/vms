@@ -8,7 +8,7 @@ Describe "vms create"
     VMS_FILESYSTEMS=$(mktemp -d)
     VMS_PKG_CACHE=$(mktemp -d)
     VMS_ARCH_ISO="$VMS_ISO/archlinux-x86_64.iso"
-    VMS_DEFAULT_MEMORY=2048
+    VMS_DEFAULT_MEMORY=2G
     VMS_DEFAULT_CPUS=2
     VMS_DEFAULT_DISK=20G
     VMS_DEFAULT_PROFILE=""

@@ -5,7 +5,7 @@ Usage: vms <command> [args]
 Commands:
     bootstrap                 Install host dependencies
     create <vm> [profile]     Create new VM, optionally with profile
-    apply <vm> <profile>      Apply a profile to an existing VM
+    apply <vm> [profile]      Apply a profile and/or HW changes to a VM
     clone <src> <vm>          Full copy VM
     fork <src> <vm>           Linked copy VM
     start <vm>                Start VM
@@ -18,8 +18,11 @@ Commands:
     mount <vm> <from> <to>    Share host directory into guest
     umount <vm> <to>          Unmount shared directory
 
-Create options:
-    --noautologin             Skip autologin setup
+Create/apply options:
+    --memory <size>           VM memory with G or M suffix (default: $VMS_DEFAULT_MEMORY)
+    --cpus <N>                Number of vCPUs (default: $VMS_DEFAULT_CPUS)
+    --displays <N>            Number of displays, 1 or 2 (default: $VMS_DEFAULT_DISPLAYS)
+    --noautologin             Skip autologin setup (create only)
 
 Mount options:
     --readonly                Mount as read-only
@@ -36,6 +39,35 @@ VMS_VERBOSE=${VMS_VERBOSE:-0}
 
 validate_name() {
     [[ "$1" =~ ^[a-zA-Z0-9._-]+$ ]] || die "Invalid VM name '$1': use only letters, numbers, hyphens, underscores, dots"
+}
+
+# Convert a memory spec like "4G" or "512M" to megabytes (as expected by
+# virt-install/virt-xml). Requires an explicit G or M suffix.
+memory_to_mb() {
+    case "$1" in
+        *G|*g) echo "$(( ${1%[Gg]} * 1024 ))" ;;
+        *M|*m) echo "${1%[Mm]}" ;;
+        *) die "memory must have G or M suffix (e.g. 4G, 512M): $1" ;;
+    esac
+}
+
+# parse_hw_flags — extract --memory, --cpus, --displays from args.
+# Sets globals HW_MEMORY, HW_CPUS, HW_DISPLAYS (empty if not given) and
+# HW_REMAINING (array of args that weren't HW flags). Callers then use
+# `set -- "${HW_REMAINING[@]+"${HW_REMAINING[@]}"}"` to continue parsing.
+parse_hw_flags() {
+    HW_MEMORY=""
+    HW_CPUS=""
+    HW_DISPLAYS=""
+    HW_REMAINING=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --memory) HW_MEMORY="$2"; shift 2 ;;
+            --cpus) HW_CPUS="$2"; shift 2 ;;
+            --displays) HW_DISPLAYS="$2"; shift 2 ;;
+            *) HW_REMAINING+=("$1"); shift ;;
+        esac
+    done
 }
 
 allocate_spice_port() {

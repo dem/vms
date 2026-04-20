@@ -30,7 +30,7 @@ Names must match `[a-zA-Z0-9._-]+` — letters, numbers, hyphens, underscores, d
 |---------------------------------|-----------------------------------------------|
 | `vms bootstrap`                 | Install host dependencies (libvirt, qemu)     |
 | `vms create <name> [profile]`   | Create new VM, optionally with profile        |
-| `vms apply <name> <profile>`    | Apply a profile to an existing VM             |
+| `vms apply <name> [profile]`    | Apply a profile and/or HW changes to a VM     |
 | `vms clone <source> <name>`     | Full copy of existing VM                      |
 | `vms fork <source> <name>`      | Linked copy of existing VM (CoW backing file) |
 | `vms start <name>`              | Start VM                                      |
@@ -127,6 +127,27 @@ running or stopped:
 ```
 vms create myvm dev                 # installs gui + dev
 vms apply myvm telegram              # adds telegram on top; gui is skipped
+```
+
+### Hardware configuration
+
+Both `create` and `apply` accept the same flags for adjusting VM hardware:
+
+| Flag | Description |
+|------|-------------|
+| `--memory <size>` | VM memory; requires `G` or `M` suffix (e.g. `4G`, `512M`) |
+| `--cpus <N>` | Number of virtual CPUs |
+| `--displays <N>` | Number of display heads (1 or 2) |
+
+`apply` can combine HW changes with a profile, or change just hardware (no
+profile argument needed). At least one of profile/flags must be given. HW
+changes require the VM to be stopped — `apply` stops it transparently,
+edits the domain XML, then restores the initial state.
+
+```
+vms create myvm dev --memory 4G --cpus 4 --displays 2
+vms apply myvm --memory 8G             # HW only, no profile
+vms apply myvm browser --displays 2    # profile + HW change
 ```
 
 ### Idempotency and marker files

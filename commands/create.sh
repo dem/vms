@@ -1,4 +1,10 @@
-# vms create <name> [profile] [--noautologin]
+# vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--noautologin]
+
+parse_hw_flags "$@"
+set -- "${HW_REMAINING[@]+"${HW_REMAINING[@]}"}"
+memory=$(memory_to_mb "${HW_MEMORY:-$VMS_DEFAULT_MEMORY}")
+cpus="${HW_CPUS:-$VMS_DEFAULT_CPUS}"
+displays="${HW_DISPLAYS:-$VMS_DEFAULT_DISPLAYS}"
 
 name=""
 profile="$VMS_DEFAULT_PROFILE"
@@ -15,9 +21,11 @@ done
 
 name="${positional[0]:-}"
 [[ ${#positional[@]} -ge 2 ]] && profile="${positional[1]}"
-[[ ${#positional[@]} -gt 2 ]] && die "usage: vms create <name> [profile] [--noautologin]"
+[[ ${#positional[@]} -gt 2 ]] && \
+    die "usage: vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--noautologin]"
 
-[[ -z "$name" ]] && die "usage: vms create <name> [profile] [--noautologin]"
+[[ -z "$name" ]] && \
+    die "usage: vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--noautologin]"
 validate_name "$name"
 
 disk="$VMS_IMAGES/$name.qcow2"
@@ -73,9 +81,9 @@ step "Defining VM and booting ISO" \
     virt-install \
     --name "$name" \
     --osinfo archlinux \
-    --memory "$VMS_DEFAULT_MEMORY" \
+    --memory "$memory" \
     --memorybacking source.type=memfd,access.mode=shared \
-    --vcpus "$VMS_DEFAULT_CPUS" \
+    --vcpus "$cpus" \
     --disk "path=$disk,format=qcow2,bus=virtio,discard=unmap" \
     --cdrom "$VMS_ARCH_ISO" \
     --boot "uefi,kernel=$kernel,initrd=$initrd,kernel_args=archisobasedir=arch archisosearchuuid=$iso_uuid console=tty0 console=ttyS0,115200n8" \
@@ -84,7 +92,7 @@ step "Defining VM and booting ISO" \
     --filesystem "type=mount,source.dir=$pkg_dir,target.dir=pkg,driver.type=virtiofs" \
     --filesystem "type=mount,source.dir=$VMS_ROOT/guest,target.dir=vms,driver.type=virtiofs,readonly=yes" \
     --graphics spice,listen=127.0.0.1 \
-    --video qxl \
+    --video "qxl,heads=$displays" \
     --channel spicevmc \
     --serial pty \
     --noautoconsole

@@ -17,6 +17,11 @@ Describe "vms apply"
     esac
   }
 
+  virt-xml() {
+    echo "virt-xml $*"
+    return 0
+  }
+
   setup() {
     VMS_ROOT=$(mktemp -d)
     mkdir -p "$VMS_ROOT/lib" "$VMS_ROOT/guest/profiles" "$VMS_ROOT/env"
@@ -46,10 +51,11 @@ STUB
     The stderr should include "usage: vms apply"
   End
 
-  It "fails with only VM name"
+  It "fails with only VM name and no flags"
+    _vm_state="running"
     When run source commands/apply.sh "myvm"
     The status should eq 1
-    The stderr should include "usage: vms apply"
+    The stderr should include "nothing to apply"
   End
 
   It "rejects invalid VM name"
@@ -86,14 +92,20 @@ STUB
     The stderr should include "stop or start"
   End
 
+  It "rejects unknown option"
+    _vm_state="running"
+    When run source commands/apply.sh "myvm" --bogus value
+    The status should eq 1
+    The stderr should include "unknown option"
+  End
+
   It "applies profile and restarts when VM was running"
     _vm_state="running"
     When run source commands/apply.sh "myvm" "gui"
     The status should eq 0
     The output should include "Applying profile gui"
     The output should include "Restarting VM"
-    The output should include "Starting VM"
-    The output should include "Profile gui applied to myvm"
+    The output should include "Applied to myvm"
   End
 
   It "starts, applies, stops when VM was shut off"
@@ -104,6 +116,43 @@ STUB
     The output should include "Applying profile gui"
     The output should include "Stopping VM"
     The output should not include "Restarting VM"
-    The output should include "Profile gui applied to myvm"
+    The output should include "Applied to myvm"
+  End
+
+  Describe "HW changes"
+    It "changes memory only, no profile"
+      _vm_state="shut off"
+      When run source commands/apply.sh "myvm" --memory 4G
+      The status should eq 0
+      The output should include "Setting memory to 4G (4096 MB)"
+      The output should not include "Applying profile"
+      The output should include "Applied to myvm"
+    End
+
+    It "changes cpus on running VM, restores running state"
+      _vm_state="running"
+      When run source commands/apply.sh "myvm" --cpus 4
+      The status should eq 0
+      The output should include "Stopping VM"
+      The output should include "Setting CPUs to 4"
+      The output should include "Starting VM"
+    End
+
+    It "changes displays"
+      _vm_state="shut off"
+      When run source commands/apply.sh "myvm" --displays 2
+      The status should eq 0
+      The output should include "Setting displays to 2"
+    End
+
+    It "combines HW change and profile"
+      _vm_state="running"
+      When run source commands/apply.sh "myvm" "gui" --memory 4G
+      The status should eq 0
+      The output should include "Stopping VM"
+      The output should include "Setting memory to 4G (4096 MB)"
+      The output should include "Applying profile gui"
+      The output should include "Restarting VM"
+    End
   End
 End
