@@ -8,16 +8,22 @@ displays="${HW_DISPLAYS:-$VMS_DEFAULT_DISPLAYS}"
 
 name=""
 profile="$VMS_DEFAULT_PROFILE"
+disk_size="$VMS_DEFAULT_DISK"
 noautologin=""
 
 positional=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --disk) disk_size="$2"; shift 2 ;;
         --noautologin) noautologin=1; shift ;;
         -*) die "unknown option: $1" ;;
         *) positional+=("$1"); shift ;;
     esac
 done
+
+# qemu-img accepts K/M/G/T suffix; require one for clarity
+[[ "$disk_size" =~ ^[0-9]+[KMGTkmgt]$ ]] || \
+    die "disk size must have K/M/G/T suffix (e.g. 20G): $disk_size"
 
 name="${positional[0]:-}"
 [[ ${#positional[@]} -ge 2 ]] && profile="${positional[1]}"
@@ -73,8 +79,8 @@ step "Creating package cache directory" \
     sudo mkdir -p "$pkg_dir"
 
 # Create disk image
-step "Creating disk image" \
-    qemu-img create -f qcow2 "$disk" "$VMS_DEFAULT_DISK"
+step "Creating disk image ($disk_size)" \
+    qemu-img create -f qcow2 "$disk" "$disk_size"
 
 # Create VM with virt-install
 step "Defining VM and booting ISO" \

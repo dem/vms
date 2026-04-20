@@ -79,6 +79,32 @@ STUB
     End
   End
 
+  Describe "disk size flag"
+    It "rejects plain number without suffix"
+      When run source commands/create.sh "testvm" --disk 20
+      The status should eq 1
+      The stderr should include "K/M/G/T suffix"
+    End
+
+    It "rejects garbage suffix"
+      When run source commands/create.sh "testvm" --disk 20X
+      The status should eq 1
+      The stderr should include "K/M/G/T suffix"
+    End
+
+    It "accepts G suffix"
+      When run source commands/create.sh "testvm" --disk 40G
+      The status should eq 0
+      The output should include "Creating disk image (40G)"
+    End
+
+    It "accepts M suffix"
+      When run source commands/create.sh "testvm" --disk 500M
+      The status should eq 0
+      The output should include "Creating disk image (500M)"
+    End
+  End
+
   Describe "SPICE port allocation"
     It "defaults to port 5900 when no port file exists"
       When run source commands/create.sh "testvm"

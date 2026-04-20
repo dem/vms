@@ -138,6 +138,7 @@ Both `create` and `apply` accept the same flags for adjusting VM hardware:
 | `--memory <size>` | VM memory; requires `G` or `M` suffix (e.g. `4G`, `512M`) |
 | `--cpus <N>` | Number of virtual CPUs |
 | `--displays <N>` | Number of display heads (1 or 2) |
+| `--disk <size>` | Disk size with `K`/`M`/`G`/`T` suffix (create only) |
 
 `apply` can combine HW changes with a profile, or change just hardware (no
 profile argument needed). At least one of profile/flags must be given. HW
