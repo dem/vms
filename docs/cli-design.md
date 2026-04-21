@@ -99,7 +99,7 @@ Profiles add packages and configuration on top of the base system. No profile = 
 | Profile   | Desktop | Default App | Use Case            |
 |-----------|---------|-------------|---------------------|
 | `gui`     | i3+X11  | none        | General GUI work    |
-| `browser` | i3+X11  | chromium    | Web browsing        |
+| `browser` | i3+X11  | chromium    | Web browsing (chromium + firefox) |
 | `telegram`| i3+X11  | telegram    | Messaging           |
 | `dev`     | i3+X11  | alacritty   | Development env     |
 
@@ -108,7 +108,7 @@ Profiles are hierarchical — each script calls its dependency if needed:
 ```
 base (no profile)
 └── gui (i3, X11, spice-vdagent)
-    ├── browser (gui + chromium)
+    ├── browser (gui + chromium + firefox)
     ├── telegram (gui + telegram)
     └── dev (gui + dev tools + claude code)
 ```
