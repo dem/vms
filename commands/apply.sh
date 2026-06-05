@@ -61,6 +61,7 @@ if [[ -n "$new_dark" ]]; then
 fi
 
 source "$VMS_ROOT/lib/vm.sh"
+source "$VMS_ROOT/lib/pkg.sh"
 
 state=$(virsh domstate "$name" 2>/dev/null)
 was_running=0
@@ -107,6 +108,10 @@ if [[ -n "$profile" ]]; then
         "$VMS_ROOT/lib/console.sh" run "$name" "/vms/profiles/$profile.sh '$vm_user'"
     }
     step "Applying profile $profile" apply_profile
+
+    # Profile may have downloaded packages into the guest's per-VM cache dir.
+    step "Syncing new packages to host cache" \
+        vms_sync_packages "$VMS_FILESYSTEMS/pkg/$name"
 fi
 
 # 3.5. Apply color change

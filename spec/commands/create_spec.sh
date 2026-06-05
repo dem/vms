@@ -1,6 +1,7 @@
 Describe "vms create"
   Include lib/common.sh
   Include lib/colors.sh
+  Include lib/pkg.sh
 
   setup() {
     VMS_ROOT=$(mktemp -d)
@@ -28,6 +29,9 @@ Describe "vms create"
 
     # Stub lib/vm.sh and lib/console.sh
     mkdir -p "$VMS_ROOT/lib"
+
+    # Copy real pkg helper (sourced by create.sh for the package sync step)
+    cp lib/pkg.sh "$VMS_ROOT/lib/pkg.sh"
     cat > "$VMS_ROOT/lib/vm.sh" <<'STUB'
 wait_for_console() { return 0; }
 wait_for_boot() { return 0; }
@@ -151,24 +155,15 @@ STUB
   End
 
   Describe "package sync"
-    sync_packages_test() {
-      local pkg_dir="$VMS_FILESYSTEMS/pkg/testvm"
-      local pkg sig
-      for pkg in "$pkg_dir"/*.pkg.tar.zst; do
-          [[ -f "$pkg" ]] || continue
-          sig="$pkg.sig"
-          if [[ -f "$sig" ]] && pacman-key --verify "$sig" "$pkg" &>/dev/null; then
-              :
-          else
-              echo "skipping ${pkg##*/}: signature verification failed" >&2
-          fi
-      done
-    }
+    # Run privileged commands without privilege under test
+    sudo() { "$@"; }
 
     It "warns when signature file is missing"
       mkdir -p "$VMS_FILESYSTEMS/pkg/testvm"
       touch "$VMS_FILESYSTEMS/pkg/testvm/foo-1.0-1-x86_64.pkg.tar.zst"
-      When run sync_packages_test
+      When call vms_sync_packages "$VMS_FILESYSTEMS/pkg/testvm"
+      The status should eq 0
+      The output should include "1 unverified"
       The stderr should include "skipping foo-1.0-1-x86_64.pkg.tar.zst: signature verification failed"
     End
 
@@ -177,7 +172,9 @@ STUB
       touch "$VMS_FILESYSTEMS/pkg/testvm/bar-2.0-1-x86_64.pkg.tar.zst"
       touch "$VMS_FILESYSTEMS/pkg/testvm/bar-2.0-1-x86_64.pkg.tar.zst.sig"
       pacman-key() { return 1; }
-      When run sync_packages_test
+      When call vms_sync_packages "$VMS_FILESYSTEMS/pkg/testvm"
+      The status should eq 0
+      The output should include "1 unverified"
       The stderr should include "skipping bar-2.0-1-x86_64.pkg.tar.zst: signature verification failed"
     End
   End

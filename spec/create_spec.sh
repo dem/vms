@@ -1,6 +1,7 @@
 Describe "create helpers"
   Include lib/common.sh
   Include lib/vm.sh
+  Include lib/pkg.sh
 
   Describe "wait_for_boot()"
     setup() {
@@ -83,7 +84,7 @@ Describe "create helpers"
     End
   End
 
-  Describe "sync_packages()"
+  Describe "vms_sync_packages()"
     setup() {
       pkg_dir=$(mktemp -d)
       VMS_PKG_CACHE=$(mktemp -d)
@@ -97,75 +98,65 @@ Describe "create helpers"
     # Override sudo to run commands without privilege
     sudo() { "$@"; }
 
-    sync_packages() {
-      local pkg sig
-      for pkg in "$pkg_dir"/*.pkg.tar.zst; do
-        [[ -f "$pkg" ]] || continue
-        sig="$pkg.sig"
-        if [[ -f "$sig" ]] && pacman-key --verify "$sig" "$pkg" &>/dev/null; then
-          [[ -f "$VMS_PKG_CACHE/${pkg##*/}" ]] || mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
-        fi
-      done
-      rm -f "$pkg_dir"/*
-    }
-
     It "moves verified pkg+sig pairs to host cache"
       touch "$pkg_dir/foo-1.0-1-x86_64.pkg.tar.zst"
       touch "$pkg_dir/foo-1.0-1-x86_64.pkg.tar.zst.sig"
       # Mock pacman-key to succeed
       pacman-key() { return 0; }
 
-      When call sync_packages
+      When call vms_sync_packages "$pkg_dir"
       The status should eq 0
+      The output should include "1 new"
       The file "$VMS_PKG_CACHE/foo-1.0-1-x86_64.pkg.tar.zst" should be exist
       The file "$VMS_PKG_CACHE/foo-1.0-1-x86_64.pkg.tar.zst.sig" should be exist
-      The directory "$pkg_dir" should be exist
+      # Moved packages are removed from the guest dir
+      The file "$pkg_dir/foo-1.0-1-x86_64.pkg.tar.zst" should not be exist
     End
 
-    It "skips packages without .sig file"
+    It "leaves packages without a .sig file in place"
       touch "$pkg_dir/nosig-1.0-1-x86_64.pkg.tar.zst"
       pacman-key() { return 0; }
 
-      When call sync_packages
+      When call vms_sync_packages "$pkg_dir"
       The status should eq 0
+      The output should include "1 unverified"
+      The stderr should include "signature verification failed"
       The file "$VMS_PKG_CACHE/nosig-1.0-1-x86_64.pkg.tar.zst" should not be exist
-      The directory "$pkg_dir" should be exist
+      The file "$pkg_dir/nosig-1.0-1-x86_64.pkg.tar.zst" should be exist
     End
 
-    It "skips packages with invalid signature"
+    It "leaves packages with an invalid signature in place"
       touch "$pkg_dir/bad-1.0-1-x86_64.pkg.tar.zst"
       touch "$pkg_dir/bad-1.0-1-x86_64.pkg.tar.zst.sig"
       # Mock pacman-key to fail
       pacman-key() { return 1; }
 
-      When call sync_packages
+      When call vms_sync_packages "$pkg_dir"
       The status should eq 0
+      The output should include "1 unverified"
+      The stderr should include "signature verification failed"
       The file "$VMS_PKG_CACHE/bad-1.0-1-x86_64.pkg.tar.zst" should not be exist
-      The file "$VMS_PKG_CACHE/bad-1.0-1-x86_64.pkg.tar.zst.sig" should not be exist
-      The directory "$pkg_dir" should be exist
+      The file "$pkg_dir/bad-1.0-1-x86_64.pkg.tar.zst" should be exist
     End
 
-    It "skips packages already in host cache"
+    It "drops the guest copy when the package is already cached on host"
       touch "$pkg_dir/exists-1.0-1-x86_64.pkg.tar.zst"
       touch "$pkg_dir/exists-1.0-1-x86_64.pkg.tar.zst.sig"
       echo "original" > "$VMS_PKG_CACHE/exists-1.0-1-x86_64.pkg.tar.zst"
       pacman-key() { return 0; }
 
-      When call sync_packages
+      When call vms_sync_packages "$pkg_dir"
       The status should eq 0
+      The output should include "1 already-cached"
+      # Host copy untouched, guest copy dropped
       The contents of file "$VMS_PKG_CACHE/exists-1.0-1-x86_64.pkg.tar.zst" should eq "original"
+      The file "$pkg_dir/exists-1.0-1-x86_64.pkg.tar.zst" should not be exist
     End
 
-    It "clears per-VM dir contents but keeps directory"
-      touch "$pkg_dir/leftover.pkg.tar.zst"
-      pacman-key() { return 0; }
-
-      dir_is_empty() { [ -z "$(ls -A "$pkg_dir")" ]; }
-
-      When call sync_packages
+    It "tolerates a missing package dir"
+      When call vms_sync_packages "$pkg_dir/does-not-exist"
       The status should eq 0
-      The directory "$pkg_dir" should be exist
-      Assert dir_is_empty
+      The output should include "no package dir"
     End
   End
 

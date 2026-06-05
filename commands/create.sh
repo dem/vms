@@ -163,20 +163,8 @@ install_base_system() {
 }
 install_base_system "$name" "$install_cmd"
 
-sync_packages() {
-    local pkg sig
-    for pkg in "$pkg_dir"/*.pkg.tar.zst; do
-        [[ -f "$pkg" ]] || continue
-        sig="$pkg.sig"
-        if [[ -f "$sig" ]] && sudo pacman-key --verify "$sig" "$pkg" &>/dev/null; then
-            [[ -f "$VMS_PKG_CACHE/${pkg##*/}" ]] || sudo mv "$pkg" "$sig" "$VMS_PKG_CACHE/"
-        else
-            echo "skipping ${pkg##*/}: signature verification failed" >&2
-        fi
-    done
-    [[ -d "$pkg_dir" ]] && sudo rm -f "$pkg_dir"/*
-}
-step "Syncing new packages to host cache" sync_packages
+source "$VMS_ROOT/lib/pkg.sh"
+step "Syncing new packages to host cache" vms_sync_packages "$pkg_dir"
 
 step "Stopping VM" stop_vm "$name"
 

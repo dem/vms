@@ -36,6 +36,9 @@ STUB
 exit 0
 STUB
     chmod +x "$VMS_ROOT/lib/console.sh"
+
+    # Real pkg helper (sourced by apply.sh for the package sync step)
+    cp lib/pkg.sh "$VMS_ROOT/lib/pkg.sh"
   }
 
   cleanup() {
