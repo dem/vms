@@ -1,5 +1,6 @@
 Describe "vms destroy"
   Include lib/common.sh
+  Include lib/colors.sh
 
   setup() {
     VMS_ROOT=$(mktemp -d)

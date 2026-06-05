@@ -73,6 +73,24 @@ parse_hw_flags() {
     done
 }
 
+# parse_color_flag — extract --color <spec> / --no-color from args.
+# Sets COLOR_SPEC (string, empty if absent), COLOR_CLEAR (0/1), and
+# COLOR_REMAINING (array of args that weren't color flags).
+parse_color_flag() {
+    COLOR_SPEC=""
+    COLOR_CLEAR=0
+    COLOR_REMAINING=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --color) COLOR_SPEC="$2"; shift 2 ;;
+            --no-color) COLOR_CLEAR=1; shift ;;
+            *) COLOR_REMAINING+=("$1"); shift ;;
+        esac
+    done
+    [[ -n "$COLOR_SPEC" && "$COLOR_CLEAR" == "1" ]] \
+        && die "--color and --no-color are mutually exclusive"
+}
+
 allocate_spice_port() {
     local port_file="$VMS_ROOT/env/next_spice_port"
     (

@@ -1,7 +1,9 @@
 # vms apply <vm> [profile] [--memory MB] [--cpus N] [--displays N]
+#                          [--color spec] [--no-color]
 
 parse_hw_flags "$@"
-set -- "${HW_REMAINING[@]+"${HW_REMAINING[@]}"}"
+parse_color_flag "${HW_REMAINING[@]+"${HW_REMAINING[@]}"}"
+set -- "${COLOR_REMAINING[@]+"${COLOR_REMAINING[@]}"}"
 memory="$HW_MEMORY"
 cpus="$HW_CPUS"
 displays="$HW_DISPLAYS"
@@ -17,13 +19,16 @@ done
 name="${positional[0]:-}"
 profile="${positional[1]:-}"
 [[ ${#positional[@]} -gt 2 ]] && \
-    die "usage: vms apply <vm> [profile] [--memory MB] [--cpus N] [--displays N]"
+    die "usage: vms apply <vm> [profile] [--memory MB] [--cpus N] [--displays N] [--color spec] [--no-color]"
 
 [[ -z "$name" ]] && \
-    die "usage: vms apply <vm> [profile] [--memory MB] [--cpus N] [--displays N]"
+    die "usage: vms apply <vm> [profile] [--memory MB] [--cpus N] [--displays N] [--color spec] [--no-color]"
 
-[[ -z "$profile$memory$cpus$displays" ]] && \
-    die "nothing to apply — specify a profile and/or --memory/--cpus/--displays"
+color_change=0
+[[ -n "$COLOR_SPEC" || "$COLOR_CLEAR" == "1" ]] && color_change=1
+
+[[ -z "$profile$memory$cpus$displays" && "$color_change" == "0" ]] && \
+    die "nothing to apply — specify a profile and/or --memory/--cpus/--displays/--color/--no-color"
 
 validate_name "$name"
 
@@ -34,10 +39,22 @@ fi
 if [[ -n "$profile" ]]; then
     profile_script="$VMS_ROOT/guest/profiles/$profile.sh"
     [[ -f "$profile_script" ]] || die "Profile $profile not found"
+fi
 
+# Both profile application and color change need the user account name.
+vm_user=""
+if [[ -n "$profile" || "$color_change" == "1" ]]; then
     vm_user="$(cat "$VMS_ROOT/env/user")"
     [[ -z "$vm_user" ]] && die "env/user not set — run vms bootstrap"
 fi
+
+# Resolve new color hex (empty if --no-color or no change to PS1 needed).
+new_dark=""
+if [[ -n "$COLOR_SPEC" ]]; then
+    new_dark=$(vms_resolve_color_spec "$COLOR_SPEC" "$name")
+fi
+new_bright=""
+[[ -n "$new_dark" ]] && new_bright=$(vms_color_bright_for "$new_dark")
 
 source "$VMS_ROOT/lib/vm.sh"
 
@@ -86,6 +103,35 @@ if [[ -n "$profile" ]]; then
         "$VMS_ROOT/lib/console.sh" run "$name" "/vms/profiles/$profile.sh '$vm_user'"
     }
     step "Applying profile $profile" apply_profile
+fi
+
+# 3.5. Apply color change
+if [[ "$color_change" == "1" ]]; then
+    # Persist on host
+    if [[ -n "$new_dark" ]]; then
+        vms_color_set "$name" "$new_dark"
+    else
+        vms_color_clear "$name"
+    fi
+
+    # Patch .vv: drop existing header-color, append new if any
+    vv="$VMS_ROOT/env/vv/$name.vv"
+    if [[ -f "$vv" ]]; then
+        sed -i '/^header-color=/d' "$vv"
+        [[ -n "$new_dark" ]] && printf 'header-color=%s\n' "$new_dark" >> "$vv"
+    fi
+
+    # Update PS1 in the guest (needs running VM)
+    if [[ "$state_now" != "running" ]]; then
+        step "Starting VM" virsh start "$name"
+        step "Waiting for boot" wait_for_boot "$name"
+        state_now="running"
+    fi
+    update_prompt_color() {
+        "$VMS_ROOT/lib/console.sh" run "$name" \
+            "/vms/set-prompt-color.sh '$new_bright' '/home/$vm_user/.bashrc'"
+    }
+    step "Updating prompt color" update_prompt_color
 fi
 
 # 4. Reconcile final state

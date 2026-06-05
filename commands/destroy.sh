@@ -45,4 +45,7 @@ if [[ -f "$vv_file" ]]; then
     rm -f "$vv_file"
 fi
 
+# Remove stored color (silent if absent)
+vms_color_clear "$name"
+
 info "VM $name destroyed"

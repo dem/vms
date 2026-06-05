@@ -2,6 +2,7 @@
 type=spice
 host=127.0.0.1
 port={{PORT}}
+title={{VM_NAME}}
 toggle-fullscreen=f11
 release-cursor=super
 resize-guest=always

@@ -1,5 +1,6 @@
 Describe "vms fork"
   Include lib/common.sh
+  Include lib/colors.sh
 
   setup() {
     VMS_ROOT=$(mktemp -d)
@@ -7,6 +8,7 @@ Describe "vms fork"
     VMS_FILESYSTEMS=$(mktemp -d)
     mkdir -p "$VMS_ROOT/env/vv" "$VMS_ROOT/templates" "$VMS_ROOT/lib"
     cp templates/viewer.vv "$VMS_ROOT/templates/viewer.vv"
+    echo "testuser" > "$VMS_ROOT/env/user"
 
     # Create source disk
     echo "diskdata" > "$VMS_IMAGES/src.qcow2"

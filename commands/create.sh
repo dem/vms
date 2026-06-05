@@ -1,7 +1,10 @@
-# vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--noautologin]
+# vms create <name> [profile] [--memory MB] [--cpus N] [--displays N]
+#                              [--disk size] [--color spec] [--no-color]
+#                              [--noautologin]
 
 parse_hw_flags "$@"
-set -- "${HW_REMAINING[@]+"${HW_REMAINING[@]}"}"
+parse_color_flag "${HW_REMAINING[@]+"${HW_REMAINING[@]}"}"
+set -- "${COLOR_REMAINING[@]+"${COLOR_REMAINING[@]}"}"
 memory=$(memory_to_mb "${HW_MEMORY:-$VMS_DEFAULT_MEMORY}")
 cpus="${HW_CPUS:-$VMS_DEFAULT_CPUS}"
 displays="${HW_DISPLAYS:-$VMS_DEFAULT_DISPLAYS}"
@@ -34,6 +37,11 @@ name="${positional[0]:-}"
     die "usage: vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--noautologin]"
 validate_name "$name"
 
+dark_hex=""
+[[ -n "$COLOR_SPEC" ]] && dark_hex=$(vms_resolve_color_spec "$COLOR_SPEC" "$name")
+bright_hex=""
+[[ -n "$dark_hex" ]] && bright_hex=$(vms_color_bright_for "$dark_hex")
+
 disk="$VMS_IMAGES/$name.qcow2"
 pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
 
@@ -54,6 +62,7 @@ cleanup_on_failure() {
     rm -f "$disk"
     sudo rm -rf "$pkg_dir"
     rm -f "$VMS_ROOT/env/vv/$name.vv"
+    vms_color_clear "$name"
 }
 trap cleanup_on_failure EXIT
 
@@ -107,9 +116,14 @@ step "Defining VM and booting ISO" \
 step "Setting SPICE port $spice_port" \
     virt-xml "$name" --edit --graphics port="$spice_port"
 
-# Generate viewer config
+# Persist color (if any) and generate viewer config
+[[ -n "$dark_hex" ]] && vms_color_set "$name" "$dark_hex"
+
 mkdir -p "$VMS_ROOT/env/vv"
-sed "s/{{PORT}}/$spice_port/" "$VMS_ROOT/templates/viewer.vv" > "$VMS_ROOT/env/vv/$name.vv"
+sed -e "s/{{PORT}}/$spice_port/" -e "s/{{VM_NAME}}/$name/" \
+    "$VMS_ROOT/templates/viewer.vv" > "$VMS_ROOT/env/vv/$name.vv"
+[[ -n "$dark_hex" ]] && \
+    printf 'header-color=%s\n' "$dark_hex" >> "$VMS_ROOT/env/vv/$name.vv"
 
 source "$VMS_ROOT/lib/vm.sh"
 
@@ -124,7 +138,7 @@ vm_gid=""
 [[ -f "$VMS_ROOT/env/uid" ]] && vm_uid="$(cat "$VMS_ROOT/env/uid")"
 [[ -f "$VMS_ROOT/env/gid" ]] && vm_gid="$(cat "$VMS_ROOT/env/gid")"
 
-install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid' '$noautologin'"
+install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid' '$noautologin' '$bright_hex'"
 install_base_system() {
     local log
     log=$(mktemp)

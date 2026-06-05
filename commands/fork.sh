@@ -1,10 +1,24 @@
-# vms fork <source> <name>
+# vms fork <source> <name> [--color spec] [--no-color]
+
+parse_color_flag "$@"
+set -- "${COLOR_REMAINING[@]+"${COLOR_REMAINING[@]}"}"
 
 source="${1:-}"
 name="${2:-}"
 
-[[ -z "$source" || -z "$name" ]] && die "usage: vms fork <source> <name>"
+[[ -z "$source" || -z "$name" ]] && die "usage: vms fork <source> <name> [--color spec] [--no-color]"
 validate_name "$name"
+
+# Resolve color: explicit --color > inherit from source > --no-color = empty.
+if [[ -n "$COLOR_SPEC" ]]; then
+    dark_hex=$(vms_resolve_color_spec "$COLOR_SPEC" "$name")
+elif [[ "$COLOR_CLEAR" == "1" ]]; then
+    dark_hex=""
+else
+    dark_hex=$(vms_color_get "$source")
+fi
+bright_hex=""
+[[ -n "$dark_hex" ]] && bright_hex=$(vms_color_bright_for "$dark_hex")
 
 source_disk="$VMS_IMAGES/$source.qcow2"
 disk="$VMS_IMAGES/$name.qcow2"
@@ -35,6 +49,7 @@ cleanup_on_failure() {
     rm -f "$disk"
     sudo rm -rf "$pkg_dir"
     rm -f "$VMS_ROOT/env/vv/$name.vv"
+    vms_color_clear "$name"
 }
 trap cleanup_on_failure EXIT
 
@@ -62,9 +77,14 @@ step "Cloning VM definition" \
 step "Setting SPICE port $spice_port" \
     virt-xml "$name" --edit --graphics port="$spice_port"
 
-# Create viewer config
+# Persist color (if any) and create viewer config
+[[ -n "$dark_hex" ]] && vms_color_set "$name" "$dark_hex"
+
 mkdir -p "$VMS_ROOT/env/vv"
-sed "s/{{PORT}}/$spice_port/" "$VMS_ROOT/templates/viewer.vv" > "$VMS_ROOT/env/vv/$name.vv"
+sed -e "s/{{PORT}}/$spice_port/" -e "s/{{VM_NAME}}/$name/" \
+    "$VMS_ROOT/templates/viewer.vv" > "$VMS_ROOT/env/vv/$name.vv"
+[[ -n "$dark_hex" ]] && \
+    printf 'header-color=%s\n' "$dark_hex" >> "$VMS_ROOT/env/vv/$name.vv"
 
 # Set hostname inside the VM
 source "$VMS_ROOT/lib/vm.sh"
@@ -77,6 +97,13 @@ set_hostname() {
         "echo '$name' > /etc/hostname && sed -i 's/127\\.0\\.1\\.1.*/127.0.1.1   $name.localdomain $name/' /etc/hosts"
 }
 step "Setting hostname" set_hostname
+
+vm_user="$(cat "$VMS_ROOT/env/user")"
+update_prompt_color() {
+    "$VMS_ROOT/lib/console.sh" run "$name" \
+        "/vms/set-prompt-color.sh '$bright_hex' '/home/$vm_user/.bashrc'"
+}
+step "Updating prompt color" update_prompt_color
 
 step "Stopping VM" stop_vm "$name"
 
