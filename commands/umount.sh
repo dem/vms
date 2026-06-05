@@ -11,16 +11,17 @@ fi
 
 [[ "$guestdir" == /* ]] || die "Guest directory must be an absolute path"
 
-# Find the virtiofs tag matching this guestdir
-# Tags are derived from guestdir: /home/user/projects → home-user-projects (possibly with -N suffix)
-base_tag=$(echo "$guestdir" | sed 's|^/||; s|/|-|g')
+# Find the virtiofs tag matching this guestdir. Tags are derived from guestdir
+# the same way `vms mount` produces them: /home/user/projects → home-user-projects
+# (possibly with a -N suffix), with unsafe chars (spaces, etc.) replaced by -.
+base_tag=$(echo "$guestdir" | sed 's|^/||; s|/|-|g; s|[^A-Za-z0-9._-]|-|g')
 tag=""
 xml=$(virsh dumpxml "$name" 2>/dev/null)
-if echo "$xml" | grep -q "dir='$base_tag'"; then
+if echo "$xml" | grep -qF "dir='$base_tag'"; then
     tag="$base_tag"
 else
     for i in $(seq 1 99); do
-        if echo "$xml" | grep -q "dir='$base_tag-$i'"; then
+        if echo "$xml" | grep -qF "dir='$base_tag-$i'"; then
             tag="$base_tag-$i"
             break
         fi

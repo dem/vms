@@ -32,8 +32,10 @@ hostdir="$(cd "$hostdir" 2>/dev/null && pwd)" || die "Host directory $hostdir do
 # guestdir must be absolute
 [[ "$guestdir" == /* ]] || die "Guest directory must be an absolute path"
 
-# Generate virtiofs tag from guest mountpoint
-tag=$(echo "$guestdir" | sed 's|^/||; s|/|-|g')
+# Generate virtiofs tag from guest mountpoint: drop leading /, turn path
+# separators into -, and replace any other unsafe chars (spaces, etc.) so the
+# tag stays a single whitespace-safe token usable in fstab and virtiofs.
+tag=$(echo "$guestdir" | sed 's|^/||; s|/|-|g; s|[^A-Za-z0-9._-]|-|g')
 if virsh dumpxml "$name" 2>/dev/null | grep -q "dir='$tag'"; then
     i=1
     while virsh dumpxml "$name" 2>/dev/null | grep -q "dir='$tag-$i'"; do
@@ -133,7 +135,9 @@ use --force to proceed"
     sudo mkdir -p "$mnt$guestdir"
     ro_opt="defaults"
     [[ -n "$readonly_flag" ]] && ro_opt="ro"
-    echo "$tag  $guestdir  virtiofs  ${ro_opt},nofail  0 0" | sudo tee -a "$mnt/etc/fstab" >/dev/null
+    # fstab is whitespace-delimited; escape spaces in the mountpoint as \040
+    guestdir_fstab="${guestdir// /\\040}"
+    echo "$tag  $guestdir_fstab  virtiofs  ${ro_opt},nofail  0 0" | sudo tee -a "$mnt/etc/fstab" >/dev/null
 
     disconnect_disk
     trap - EXIT
