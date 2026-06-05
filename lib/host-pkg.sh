@@ -84,13 +84,13 @@ cmd_sync() {
     for vm in "${vms[@]}"; do
         local dir="$base/$vm"
         [[ -d "$dir" ]] || die "no package dir for '$vm' at $dir"
-        local summary left
+        local summary cleaned
         summary="$(vms_sync_packages "$dir")"   # moves verified to host, drops cached dups
         # clean up: empty the guest cache dir — leftover files (unverified /
         # partial downloads) and pacman's download-* temp dirs. Keep the dir.
-        left=$(_pkg_count "$dir")
+        cleaned=$(sudo find "$dir" -mindepth 1 | wc -l)
         sudo find "$dir" -mindepth 1 -delete
-        printf '%s: %s, cleaned %s leftover\n' "$vm" "$summary" "$left"
+        printf '%s: %s, cleaned %s item(s)\n' "$vm" "$summary" "$cleaned"
     done
 }
 
