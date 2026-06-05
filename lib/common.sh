@@ -89,8 +89,9 @@ parse_color_flag() {
             *) COLOR_REMAINING+=("$1"); shift ;;
         esac
     done
-    [[ -n "$COLOR_SPEC" && "$COLOR_CLEAR" == "1" ]] \
-        && die "--color and --no-color are mutually exclusive"
+    if [[ -n "$COLOR_SPEC" && "$COLOR_CLEAR" == "1" ]]; then
+        die "--color and --no-color are mutually exclusive"
+    fi
 }
 
 allocate_spice_port() {
