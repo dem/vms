@@ -85,6 +85,13 @@ iso_uuid=$(blkid -s UUID -o value "$VMS_ARCH_ISO")
 # Allocate static SPICE port
 spice_port=$(allocate_spice_port)
 
+# QXL stores every head's scanout framebuffer in vgamem; the 16M default only
+# fits one full-HD display, so size it per head (32M each, floor 32M) and keep
+# vram/ram >= vgamem as QEMU requires.
+vgamem=$(( displays * 32768 ))
+(( vgamem < 32768 )) && vgamem=32768
+vram=$(( vgamem > 65536 ? vgamem : 65536 ))
+
 info "Creating VM $name"
 
 # Create VM-specific package cache directory
@@ -111,7 +118,7 @@ step "Defining VM and booting ISO" \
     --filesystem "type=mount,source.dir=$pkg_dir,target.dir=pkg,driver.type=virtiofs" \
     --filesystem "type=mount,source.dir=$VMS_ROOT/guest,target.dir=vms,driver.type=virtiofs,readonly=yes" \
     --graphics spice,listen=127.0.0.1 \
-    --video "qxl,heads=$displays" \
+    --video "model=qxl,heads=$displays,vgamem=$vgamem,vram=$vram,ram=$vram" \
     --channel spicevmc \
     --serial pty \
     --noautoconsole
