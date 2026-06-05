@@ -21,7 +21,8 @@ pacman -S --noconfirm --needed \
     xorg-server xorg-xinit xorg-xrandr xorg-xev \
     i3-wm i3status \
     alacritty \
-    spice-vdagent
+    spice-vdagent \
+    ttf-dejavu noto-fonts noto-fonts-emoji ttf-liberation
 
 assets=/vms/profiles/gui
 install -Dm644 "$assets/i3-config"          "$vm_home/.config/i3/config"
