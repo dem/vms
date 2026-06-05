@@ -93,17 +93,8 @@ if [[ -n "$memory" ]]; then
 fi
 [[ -n "$cpus" ]] && step "Setting CPUs to $cpus" \
     virt-xml "$name" --edit --vcpus "$cpus"
-if [[ -n "$displays" ]]; then
-    # QXL stores every head's scanout framebuffer in vgamem; the 16M default
-    # only fits one full-HD display, so size it per head (32M each, floor 32M)
-    # and keep vram/ram >= vgamem as QEMU requires.
-    vgamem=$(( displays * 32768 ))
-    (( vgamem < 32768 )) && vgamem=32768
-    vram=$(( vgamem > 65536 ? vgamem : 65536 ))
-    step "Setting displays to $displays" \
-        virt-xml "$name" --edit \
-        --video "heads=$displays,vgamem=$vgamem,vram=$vram,ram=$vram"
-fi
+[[ -n "$displays" ]] && step "Setting displays to $displays" \
+    virt-xml "$name" --edit --video "model.type=virtio,heads=$displays"
 
 # 3. Apply profile (needs running VM)
 if [[ -n "$profile" ]]; then
