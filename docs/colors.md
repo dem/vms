@@ -63,13 +63,21 @@ the viewer's chrome is closer to white than to black.
 ### PS1
 
 Inside the guest, the user's `~/.bashrc` is rewritten so the `\u@\h` portion
-of the default Arch prompt (`[user@host ~]$`) is wrapped in a 24-bit ANSI
-color code. Only `\u@\h` is colored; brackets, working directory, and the
-`$` stay default — the prompt shape doesn't change, just the identifying
-substring.
+of the default Arch prompt (`[user@host ~]$`) is colored. Only `\u@\h` is
+colored; brackets, working directory, and the `$` stay default — the prompt
+shape doesn't change, just the identifying substring.
 
-The hex used is the bright variant of the same hue, because terminal
-backgrounds are typically dark.
+The written block picks the escape per terminal, when `.bashrc` is sourced:
+
+- **X11 terminals** get a 24-bit truecolor code using the bright variant of
+  the hue, so the prompt matches the viewer header exactly.
+- **The Linux text console** (`TERM=linux`) has no truecolor, so it falls
+  back to the nearest 16-color ANSI bright code (`VMS_COLOR_ANSI`). The 16
+  hues collapse into ~6 ANSI buckets — approximate, and themed by the
+  console palette — but it keeps the prompt tinted there too.
+
+The block is wrapped in `# >>> vms prompt color >>>` markers so re-applying
+`--color` replaces it cleanly instead of stacking up.
 
 ## Assignment
 

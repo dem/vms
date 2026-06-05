@@ -18,7 +18,11 @@ else
     dark_hex=$(vms_color_get "$source")
 fi
 bright_hex=""
-[[ -n "$dark_hex" ]] && bright_hex=$(vms_color_bright_for "$dark_hex")
+ansi_code=""
+if [[ -n "$dark_hex" ]]; then
+    bright_hex=$(vms_color_bright_for "$dark_hex")
+    ansi_code=$(vms_color_ansi_for "$dark_hex")
+fi
 
 source_disk="$VMS_IMAGES/$source.qcow2"
 disk="$VMS_IMAGES/$name.qcow2"
@@ -101,7 +105,7 @@ step "Setting hostname" set_hostname
 vm_user="$(cat "$VMS_ROOT/env/user")"
 update_prompt_color() {
     "$VMS_ROOT/lib/console.sh" run "$name" \
-        "/vms/set-prompt-color.sh '$bright_hex' '/home/$vm_user/.bashrc'"
+        "/vms/set-prompt-color.sh '$bright_hex' '$ansi_code' '/home/$vm_user/.bashrc'"
 }
 step "Updating prompt color" update_prompt_color
 

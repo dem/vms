@@ -54,7 +54,11 @@ if [[ -n "$COLOR_SPEC" ]]; then
     new_dark=$(vms_resolve_color_spec "$COLOR_SPEC" "$name")
 fi
 new_bright=""
-[[ -n "$new_dark" ]] && new_bright=$(vms_color_bright_for "$new_dark")
+new_ansi=""
+if [[ -n "$new_dark" ]]; then
+    new_bright=$(vms_color_bright_for "$new_dark")
+    new_ansi=$(vms_color_ansi_for "$new_dark")
+fi
 
 source "$VMS_ROOT/lib/vm.sh"
 
@@ -129,7 +133,7 @@ if [[ "$color_change" == "1" ]]; then
     fi
     update_prompt_color() {
         "$VMS_ROOT/lib/console.sh" run "$name" \
-            "/vms/set-prompt-color.sh '$new_bright' '/home/$vm_user/.bashrc'"
+            "/vms/set-prompt-color.sh '$new_bright' '$new_ansi' '/home/$vm_user/.bashrc'"
     }
     step "Updating prompt color" update_prompt_color
 fi

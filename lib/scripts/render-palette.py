@@ -17,6 +17,7 @@ SRC = COLORS_SH.read_text()
 names = re.findall(r"\b[a-z]+\b", re.search(r"VMS_COLOR_NAMES=\((.*?)\)", SRC, re.S).group(1))
 dark = re.findall(r'"(#[0-9a-fA-F]{6})"', re.search(r"VMS_COLOR_DARK=\((.*?)\)", SRC, re.S).group(1))
 bright = re.findall(r'"(#[0-9a-fA-F]{6})"', re.search(r"VMS_COLOR_BRIGHT=\((.*?)\)", SRC, re.S).group(1))
+ansi = re.findall(r"\b(9[0-7])\b", re.search(r"VMS_COLOR_ANSI=\((.*?)\)", SRC, re.S).group(1))
 
 
 def rgb(h):
@@ -26,6 +27,10 @@ def rgb(h):
 
 def fg(c):
     return f"\033[38;2;{c[0]};{c[1]};{c[2]}m"
+
+
+def afg(code):
+    return f"\033[{code}m"
 
 
 def bg(c):
@@ -42,26 +47,33 @@ WHITE = (255, 255, 255)
 
 print()
 print(f"{BLD}vms 16-hue palette (from lib/colors.sh){RST}")
-print("  600 → viewer header strip")
-print("  300 → PS1 \\u@\\h foreground")
+print("  600  → viewer header strip")
+print("  300  → PS1 \\u@\\h foreground, truecolor (X11 terminals)")
+print("  ANSI → PS1 \\u@\\h foreground, 16-color (Linux text console)")
 print()
+BAR_WIDTH = 10
 print(
-    f"  {'hue':<8}  {'600':<8} {'300':<8} "
-    f"{'viewer header':<32}  PS1"
+    f"  {'hue':<8}  {'600':<8} {'300':<8} {'ANSI':<5} "
+    f"{'header':<{BAR_WIDTH}}  {'PS1 (X11)':<18}  PS1 (console)"
 )
 print()
-BAR_WIDTH = 28
-for name, dh, bh in zip(names, dark, bright):
+
+
+def ps1_bar(name, pad, color_seq):
+    return (
+        f"{bg(TERM)}{fg(TERM_FG)}["
+        f"{color_seq}user@{name}{fg(TERM_FG)} ~]${pad}{RST}"
+    )
+
+
+for name, dh, bh, code in zip(names, dark, bright, ansi):
     D = rgb(dh)
     B = rgb(bh)
     pad = " " * (8 - len(name))
-    bar = f"  vms-{name}".ljust(BAR_WIDTH)
-    header = f"{bg(D)}{fg(WHITE)}{bar}{RST}"
-    ps1 = (
-        f"{bg(TERM)}{fg(TERM_FG)}["
-        f"{fg(B)}user@vms-{name}{fg(TERM_FG)} ~]$ ls -la{pad}{RST}"
-    )
-    print(f"  {name:<8}  {dh}  {bh}  {header}  {ps1}")
+    header = f"{bg(D)}{fg(WHITE)}{f' {name}'.ljust(BAR_WIDTH)}{RST}"
+    ps1_true = ps1_bar(name, pad, fg(B))
+    ps1_ansi = ps1_bar(name, pad, afg(code))
+    print(f"  {name:<8}  {dh}  {bh}  {code:<5} {header}  {ps1_true}  {ps1_ansi}")
 print()
 
 
@@ -77,9 +89,7 @@ for vm, hue in examples:
     D = rgb(dark[idx])
     B = rgb(bright[idx])
     swatch_d = f"{bg(D)}{fg(WHITE)}  {hue:<8}  {RST}"
-    swatch_b = (
-        f"{bg(TERM)}{fg(TERM_FG)}["
-        f"{fg(B)}user@{vm}{fg(TERM_FG)} ~]$ {RST}"
-    )
-    print(f"  {vm:<10}  {swatch_d}  {swatch_b}")
+    swatch_x11 = f"{bg(TERM)}{fg(TERM_FG)}[{fg(B)}user@{vm}{fg(TERM_FG)} ~]$ {RST}"
+    swatch_con = f"{bg(TERM)}{fg(TERM_FG)}[{afg(ansi[idx])}user@{vm}{fg(TERM_FG)} ~]$ {RST}"
+    print(f"  {vm:<10}  {swatch_d}  {swatch_x11}  {swatch_con}")
 print()

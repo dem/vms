@@ -40,7 +40,11 @@ validate_name "$name"
 dark_hex=""
 [[ -n "$COLOR_SPEC" ]] && dark_hex=$(vms_resolve_color_spec "$COLOR_SPEC" "$name")
 bright_hex=""
-[[ -n "$dark_hex" ]] && bright_hex=$(vms_color_bright_for "$dark_hex")
+ansi_code=""
+if [[ -n "$dark_hex" ]]; then
+    bright_hex=$(vms_color_bright_for "$dark_hex")
+    ansi_code=$(vms_color_ansi_for "$dark_hex")
+fi
 
 disk="$VMS_IMAGES/$name.qcow2"
 pkg_dir="$VMS_FILESYSTEMS/pkg/$name"
@@ -138,7 +142,7 @@ vm_gid=""
 [[ -f "$VMS_ROOT/env/uid" ]] && vm_uid="$(cat "$VMS_ROOT/env/uid")"
 [[ -f "$VMS_ROOT/env/gid" ]] && vm_gid="$(cat "$VMS_ROOT/env/gid")"
 
-install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid' '$noautologin' '$bright_hex'"
+install_cmd="/vms/install.sh '$name' '$vm_user' '$(cat "$VMS_ROOT/env/root_passwd")' '$(cat "$VMS_ROOT/env/user_passwd")' '$vm_uid' '$vm_gid' '$noautologin' '$bright_hex' '$ansi_code'"
 install_base_system() {
     local log
     log=$(mktemp)

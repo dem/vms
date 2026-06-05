@@ -2,7 +2,7 @@
 set -e
 
 # Arch Linux Automated Installation Script for VMs
-# Usage: ./arch-install.sh <hostname> <username> <root_hash> <user_hash> [uid] [gid] [noautologin] [bright_hex]
+# Usage: ./arch-install.sh <hostname> <username> <root_hash> <user_hash> [uid] [gid] [noautologin] [bright_hex] [ansi_code]
 
 DISK="/dev/vda"
 HOSTNAME="${1:?hostname required}"
@@ -13,6 +13,7 @@ USER_UID="${5:-}"
 USER_GID="${6:-}"
 NOAUTOLOGIN="${7:-}"
 BRIGHT_HEX="${8:-}"
+ANSI_CODE="${9:-}"
 
 echo "Target disk: $DISK"
 echo "Hostname: $HOSTNAME"
@@ -129,7 +130,7 @@ sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
 # Color the user@host portion of PS1 in the user's bashrc.
 if [ -n "$BRIGHT_HEX" ]; then
-    /vms/set-prompt-color.sh "$BRIGHT_HEX" "/home/$USERNAME/.bashrc"
+    /vms/set-prompt-color.sh "$BRIGHT_HEX" "$ANSI_CODE" "/home/$USERNAME/.bashrc"
 fi
 
 # Serial console
