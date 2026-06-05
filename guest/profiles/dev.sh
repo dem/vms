@@ -33,11 +33,14 @@ usermod -aG docker "$vm_user"
 echo "=== Installing Claude Code ==="
 sudo -u "$vm_user" bash -c 'curl -fsSL https://claude.ai/install.sh | bash'
 
-# Add ~/.local/bin to PATH (claude installs there)
-cat >> "$vm_home/.bash_profile" <<'EOF'
+# Add ~/.local/bin to PATH (claude installs there). Must go in .bashrc, not
+# .bash_profile: the gui profile's `exec startx` replaces the login shell
+# before any later .bash_profile line runs, so alacritty's interactive shells
+# (which read .bashrc) would never see it.
+cat >> "$vm_home/.bashrc" <<'EOF'
 export PATH="$HOME/.local/bin:$PATH"
 EOF
-chown "$vm_user:$vm_user" "$vm_home/.bash_profile"
+chown "$vm_user:$vm_user" "$vm_home/.bashrc"
 
 mkdir -p /etc/vms-profiles
 touch "$marker"
