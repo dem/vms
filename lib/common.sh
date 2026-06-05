@@ -22,10 +22,12 @@ Create/apply options:
     --memory <size>           VM memory with G or M suffix (default: $VMS_DEFAULT_MEMORY)
     --cpus <N>                Number of vCPUs (default: $VMS_DEFAULT_CPUS)
     --displays <N>            Number of displays, 1 or 2 (default: $VMS_DEFAULT_DISPLAYS)
+    --color <spec>            Tint viewer header and guest PS1 (also clone/fork)
+    --no-color                Clear an existing color (also clone/fork)
 
 Create-only options:
     --disk <size>             Disk size with K/M/G/T suffix (default: $VMS_DEFAULT_DISK)
-    --noautologin             Skip autologin setup
+    --no-autologin            Skip autologin setup
 
 Mount options:
     --readonly                Mount as read-only

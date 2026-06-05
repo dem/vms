@@ -67,7 +67,7 @@ Each command script has a `while/case` arg parser. Add `-v` there:
 
 ```bash
 case "$1" in
-    --noautologin) noautologin=1; shift ;;
+    --no-autologin) noautologin=1; shift ;;
     -v|--verbose) VMS_VERBOSE=1; shift ;;
     ...
 esac

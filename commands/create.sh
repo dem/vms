@@ -1,6 +1,6 @@
 # vms create <name> [profile] [--memory MB] [--cpus N] [--displays N]
 #                              [--disk size] [--color spec] [--no-color]
-#                              [--noautologin]
+#                              [--no-autologin]
 
 parse_hw_flags "$@"
 parse_color_flag "${HW_REMAINING[@]+"${HW_REMAINING[@]}"}"
@@ -18,7 +18,7 @@ positional=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --disk) disk_size="$2"; shift 2 ;;
-        --noautologin) noautologin=1; shift ;;
+        --no-autologin) noautologin=1; shift ;;
         -*) die "unknown option: $1" ;;
         *) positional+=("$1"); shift ;;
     esac
@@ -31,10 +31,10 @@ done
 name="${positional[0]:-}"
 [[ ${#positional[@]} -ge 2 ]] && profile="${positional[1]}"
 [[ ${#positional[@]} -gt 2 ]] && \
-    die "usage: vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--noautologin]"
+    die "usage: vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--no-autologin]"
 
 [[ -z "$name" ]] && \
-    die "usage: vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--noautologin]"
+    die "usage: vms create <name> [profile] [--memory MB] [--cpus N] [--displays N] [--no-autologin]"
 validate_name "$name"
 
 dark_hex=""
